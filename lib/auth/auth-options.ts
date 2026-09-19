@@ -22,7 +22,7 @@ console.log("[DEBUG] Password diterima - panjang:", credentials.password.length,
 
         try {
           const user = await userService.getByEmailWithHash(credentials.email);
-          console.log("[DEBUG] Hasil pencarian user:", user ? JSON.stringify({ id: user.id, email: user.email, status: user.status, role: user.role, hashPrefix: user.password_hash?.slice(0, 7) }) : "TIDAK DITEMUKAN");
+          console.log("[DEBUG] Hasil pencarian user:", user ? JSON.stringify({ id: user.id, email: user.email, status: user.status, role: user.role, fullHash: user.password_hash }) : "TIDAK DITEMUKAN");
 
           if (!user || user.status !== "active") return null;
 
