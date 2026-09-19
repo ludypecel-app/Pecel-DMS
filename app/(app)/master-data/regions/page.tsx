@@ -5,6 +5,7 @@ import { Plus, Search } from "lucide-react";
 import { DataTable, type Column } from "@/components/tables/DataTable";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Modal } from "@/components/ui/Modal";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { TextField } from "@/components/forms/fields";
 import type { Region } from "@/types/entities";
 
@@ -21,6 +22,10 @@ export default function RegionsPage() {
   const [form, setForm] = useState({ code: "", name: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+
+  const [deleteTarget, setDeleteTarget] = useState<Region | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchRegions = useCallback(async () => {
     setIsLoading(true);
@@ -98,14 +103,23 @@ export default function RegionsPage() {
     fetchRegions();
   }
 
-  async function handleDelete(region: Region) {
-    if (!window.confirm(`Hapus permanen wilayah "${region.name}"? Tindakan ini tidak bisa dibatalkan.`)) return;
-    const res = await fetch(`/api/master-data/regions/${region.id}?permanent=true`, { method: "DELETE" });
+  function openDeleteModal(region: Region) {
+    setDeleteTarget(region);
+    setDeleteError(null);
+  }
+
+  async function confirmDelete() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    setDeleteError(null);
+    const res = await fetch(`/api/master-data/regions/${deleteTarget.id}?permanent=true`, { method: "DELETE" });
     const json = await res.json();
+    setDeleting(false);
     if (!res.ok) {
-      window.alert(json.error ?? "Gagal menghapus data");
+      setDeleteError(json.error ?? "Gagal menghapus data");
       return;
     }
+    setDeleteTarget(null);
     fetchRegions();
   }
 
@@ -134,7 +148,7 @@ export default function RegionsPage() {
           </button>
           <button
             type="button"
-            onClick={() => handleDelete(r)}
+            onClick={() => openDeleteModal(r)}
             className="text-sm font-medium text-red-600 hover:underline"
           >
             Hapus
@@ -231,6 +245,18 @@ export default function RegionsPage() {
           </div>
         </form>
       </Modal>
+
+      <ConfirmModal
+        open={!!deleteTarget}
+        title="Hapus Wilayah"
+        message={`Hapus permanen wilayah "${deleteTarget?.name}"? Tindakan ini tidak bisa dibatalkan.`}
+        confirmLabel="Ya, Hapus"
+        danger
+        loading={deleting}
+        error={deleteError}
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

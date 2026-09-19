@@ -109,6 +109,12 @@ export interface Visit extends BaseEntity {
   checked_in_at?: string;
   checked_in_lat?: number;
   checked_in_lng?: number;
+  // Hasil validasi "soft" jarak terhadap koordinat Warung (lihat
+  // CHECK_IN_RADIUS_METERS di lib/utils/geo.ts). Tidak pernah memblokir
+  // check-in — hanya menandai untuk ditinjau admin di halaman Review.
+  // undefined = tidak bisa dihitung (Warung atau sales tidak punya koordinat).
+  checked_in_out_of_range?: boolean;
+  checked_in_distance_m?: number;
   checked_out_at?: string;
   notes?: string;
 }

@@ -258,6 +258,8 @@ export const visitService = {
       status: assignment.status,
       checkedInAt: visit?.checked_in_at,
       checkedOutAt: visit?.checked_out_at,
+      checkedInOutOfRange: visit?.checked_in_out_of_range,
+      checkedInDistanceM: visit?.checked_in_distance_m,
       visitNotes: visit?.notes,
       rows,
       totalTagihan,

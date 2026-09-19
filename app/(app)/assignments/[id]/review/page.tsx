@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, AlertTriangle } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { TextField } from "@/components/forms/fields";
 import type { VisitReviewData } from "@/features/visits/types/visit.types";
@@ -113,6 +113,13 @@ export default function AssignmentReviewPage() {
           <dt className="text-neutral-500">Check-Out</dt>
           <dd className="text-right">{formatDateTime(data.checkedOutAt)}</dd>
         </dl>
+        {data.checkedInOutOfRange && (
+          <p className="mt-2 flex items-center gap-1.5 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-700">
+            <AlertTriangle size={15} className="shrink-0" />
+            Check-in tercatat ~{data.checkedInDistanceM}m dari titik koordinat warung — di luar radius wajar,
+            mohon ditinjau.
+          </p>
+        )}
         {data.visitNotes && <p className="mt-2 text-sm text-neutral-600">Catatan: {data.visitNotes}</p>}
       </div>
 

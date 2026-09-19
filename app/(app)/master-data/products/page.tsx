@@ -5,6 +5,7 @@ import { Plus, Search } from "lucide-react";
 import { DataTable, type Column } from "@/components/tables/DataTable";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Modal } from "@/components/ui/Modal";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { TextField } from "@/components/forms/fields";
 import type { Product } from "@/types/entities";
 
@@ -23,6 +24,10 @@ export default function ProductsPage() {
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+
+  const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchProducts = useCallback(async () => {
     setIsLoading(true);
@@ -104,14 +109,23 @@ export default function ProductsPage() {
     fetchProducts();
   }
 
-  async function handleDelete(product: Product) {
-    if (!window.confirm(`Hapus permanen produk "${product.name}"? Tindakan ini tidak bisa dibatalkan.`)) return;
-    const res = await fetch(`/api/master-data/products/${product.id}?permanent=true`, { method: "DELETE" });
+  function openDeleteModal(product: Product) {
+    setDeleteTarget(product);
+    setDeleteError(null);
+  }
+
+  async function confirmDelete() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    setDeleteError(null);
+    const res = await fetch(`/api/master-data/products/${deleteTarget.id}?permanent=true`, { method: "DELETE" });
     const json = await res.json();
+    setDeleting(false);
     if (!res.ok) {
-      window.alert(json.error ?? "Gagal menghapus data");
+      setDeleteError(json.error ?? "Gagal menghapus data");
       return;
     }
+    setDeleteTarget(null);
     fetchProducts();
   }
 
@@ -135,7 +149,7 @@ export default function ProductsPage() {
           <button type="button" onClick={() => handleToggleStatus(p)} className="text-sm font-medium text-neutral-500 hover:underline">
             {p.status === "active" ? "Nonaktifkan" : "Aktifkan"}
           </button>
-          <button type="button" onClick={() => handleDelete(p)} className="text-sm font-medium text-red-600 hover:underline">
+          <button type="button" onClick={() => openDeleteModal(p)} className="text-sm font-medium text-red-600 hover:underline">
             Hapus
           </button>
         </div>
@@ -206,6 +220,18 @@ export default function ProductsPage() {
           </div>
         </form>
       </Modal>
+
+      <ConfirmModal
+        open={!!deleteTarget}
+        title="Hapus Produk"
+        message={`Hapus permanen produk "${deleteTarget?.name}"? Tindakan ini tidak bisa dibatalkan.`}
+        confirmLabel="Ya, Hapus"
+        danger
+        loading={deleting}
+        error={deleteError}
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

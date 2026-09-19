@@ -7,7 +7,9 @@ import {
   SALES_TABLE,
   STOCK_TRANSACTION_TABLE,
   VISIT_TABLE,
+  WARUNG_TABLE,
 } from "@/lib/google-sheets/tables";
+import { haversineDistanceMeters, CHECK_IN_RADIUS_METERS } from "@/lib/utils/geo";
 import {
   createAssignmentSchema,
   rejectAssignmentSchema,
@@ -18,7 +20,7 @@ import {
 } from "../validations/assignment.schema";
 import { notificationService } from "@/features/notifications/services/notification.service";
 import { auditLog } from "@/lib/audit-log/audit-log.service";
-import type { Assignment, Order, OrderDetail, Sales, StockTransaction, Visit } from "@/types/entities";
+import type { Assignment, Order, OrderDetail, Sales, StockTransaction, Visit, Warung } from "@/types/entities";
 import type { AssignmentWithOrder } from "../types/assignment.types";
 
 const repository = new SheetsRepository<Assignment>(ASSIGNMENT_TABLE);
@@ -27,6 +29,7 @@ const orderDetailRepo = new SheetsRepository<OrderDetail>(ORDER_DETAIL_TABLE);
 const salesRepo = new SheetsRepository<Sales>(SALES_TABLE);
 const stockTxRepo = new SheetsRepository<StockTransaction>(STOCK_TRANSACTION_TABLE);
 const visitRepo = new SheetsRepository<Visit>(VISIT_TABLE);
+const warungRepo = new SheetsRepository<Warung>(WARUNG_TABLE);
 
 // Status di mana pembatalan tugas masih diizinkan tanpa proses retur khusus.
 const FREELY_CANCELLABLE = ["assigned", "ready_to_picking", "ready_to_delivery"];
@@ -294,6 +297,12 @@ export const assignmentService = {
    * Visit (dipakai lagi di Tahap 6 untuk pendataan stok/pembayaran).
    * Izin lokasi ditolak/GPS tidak tersedia tetap diperbolehkan check-in
    * tanpa koordinat — sesuai catatan Tahap 6 brief bahwa GPS tidak selalu ada.
+   *
+   * Validasi jarak ke koordinat Warung bersifat SOFT: kalau sales & Warung
+   * sama-sama punya koordinat dan jaraknya melebihi CHECK_IN_RADIUS_METERS,
+   * check-in tetap berhasil — hanya ditandai `checked_in_out_of_range` agar
+   * admin bisa meninjau di halaman Review, bukan memblokir sales di lapangan
+   * (GPS ponsel bisa meleset cukup jauh, apalagi di dalam ruangan).
    */
   async checkIn(id: string, salesId: string, input: unknown): Promise<AssignmentWithOrder> {
     const assignment = await repository.findById(id);
@@ -306,6 +315,19 @@ export const assignmentService = {
     const { latitude, longitude } = checkInSchema.parse(input);
     const order = await orderRepo.findById(assignment.order_id);
     if (!order) throw new Error("Pesanan terkait tidak ditemukan");
+    const warung = await warungRepo.findById(order.warung_id);
+
+    let outOfRange: boolean | undefined;
+    let distanceM: number | undefined;
+    if (
+      latitude !== undefined &&
+      longitude !== undefined &&
+      warung?.latitude !== undefined &&
+      warung?.longitude !== undefined
+    ) {
+      distanceM = Math.round(haversineDistanceMeters(latitude, longitude, warung.latitude, warung.longitude));
+      outOfRange = distanceM > CHECK_IN_RADIUS_METERS;
+    }
 
     await visitRepo.create({
       assignment_id: id,
@@ -314,6 +336,8 @@ export const assignmentService = {
       checked_in_at: new Date().toISOString(),
       checked_in_lat: latitude,
       checked_in_lng: longitude,
+      checked_in_out_of_range: outOfRange,
+      checked_in_distance_m: distanceM,
     } as Omit<Visit, "id" | "created_at" | "updated_at">);
 
     const updated = await repository.update(id, { status: "arrived" } as Partial<Assignment>);
@@ -324,13 +348,15 @@ export const assignmentService = {
       entityId: id,
       action: "check_in",
       actorId: salesId,
-      after: { status: "arrived", latitude, longitude },
+      after: { status: "arrived", latitude, longitude, outOfRange, distanceM },
     });
 
     await notificationService.send({
       userId: "admin", // lihat catatan di notifikasi "assignment_accepted" di atas
       type: "sales_arrived",
-      message: "Sales telah sampai di lokasi warung.",
+      message: outOfRange
+        ? `Sales telah check-in, tapi berjarak ~${distanceM}m dari titik warung (di luar radius ${CHECK_IN_RADIUS_METERS}m) — mohon ditinjau.`
+        : "Sales telah sampai di lokasi warung.",
       link: `/assignments/${id}`,
     });
 

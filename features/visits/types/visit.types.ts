@@ -31,6 +31,8 @@ export interface VisitReviewData {
   status: string;
   checkedInAt?: string;
   checkedOutAt?: string;
+  checkedInOutOfRange?: boolean;
+  checkedInDistanceM?: number;
   visitNotes?: string;
   rows: VisitReviewRow[];
   totalTagihan: number;

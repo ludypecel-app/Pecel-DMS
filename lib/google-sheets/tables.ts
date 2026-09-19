@@ -149,6 +149,12 @@ export const VISIT_TABLE = {
     "notes",
     "created_at",
     "updated_at",
+    // Ditambahkan belakangan (validasi jarak check-in) — sengaja diletakkan
+    // di AKHIR array ini, bukan disisipkan di tengah, supaya kolom baru
+    // tinggal ditambahkan di ujung kanan sheet "Visit" tanpa mengubah posisi
+    // kolom lama. Lihat docs/database-schema.md.
+    "checked_in_out_of_range",
+    "checked_in_distance_m",
   ],
 };
 

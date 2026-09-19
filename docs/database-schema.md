@@ -27,8 +27,10 @@ Satu spreadsheet Google per grup entitas (bukan satu sheet besar untuk semua dat
   - Konfirmasi admin (Tahap 7) memakai `completed_by`/`completed_at`. Pembukaan kembali (reopen) untuk koreksi memakai `reopened_by`/`reopened_at`/`reopen_reason` dan mengembalikan `status` ke `visited` — data StockTransaction/Payment lama TIDAK dihapus.
 
 ## Visits (spreadsheet: `visits`)
-- **Visit**: id, assignment_id, sales_id, warung_id, checked_in_at, checked_in_lat, checked_in_lng, checked_out_at, notes, created_at, updated_at
+- **Visit**: id, assignment_id, sales_id, warung_id, checked_in_at, checked_in_lat, checked_in_lng, checked_out_at, notes, created_at, updated_at, checked_in_out_of_range, checked_in_distance_m
   - Dibuat otomatis saat sales check-in (Tahap 5); `checked_out_at` & `notes` diisi saat Check-Out (Tahap 6).
+  - `checked_in_out_of_range` (boolean) & `checked_in_distance_m` (angka, meter): hasil validasi **soft** jarak check-in terhadap koordinat Warung (radius toleransi 50m, lihat `lib/utils/geo.ts`). Tidak pernah memblokir check-in — hanya menandai untuk ditinjau admin di halaman Review. Kosong kalau Warung atau sales tidak punya koordinat.
+  - **Kolom baru** — ditambahkan di UJUNG baris header sheet "Visit" (kolom setelah `updated_at`), bukan disisipkan di tengah, supaya kolom lama yang sudah ada datanya tidak bergeser posisi. Kalau sheet lama belum punya 2 kolom ini, tambahkan manual di header sebelum deploy.
 - **StockTransaction**: id, visit_id, assignment_id, product_id, type (picking_out/sales_out/returned/retur_pembatalan), quantity, created_at, updated_at
   - `picking_out` dicatat saat admin konfirmasi picking (Tahap 5). `sales_out` & `returned` dicatat saat sales Check-Out (Tahap 6) — masing-masing dari field Penjualan & Produk Ditarik. `retur_pembatalan` dicatat otomatis bila tugas dibatalkan saat status `on_delivery`.
   - "Sisa Stok" dan "Total Stok Saat Ini" (Bagian 9 brief) **tidak disimpan** sebagai kolom — dihitung dari jumlah `picking_out − sales_out − returned` setiap kali dibutuhkan, sesuai keputusan Tahap 0 (menghindari perhitungan ganda).

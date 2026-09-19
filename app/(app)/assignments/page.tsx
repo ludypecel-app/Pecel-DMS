@@ -8,6 +8,7 @@ import { DataTable, type Column } from "@/components/tables/DataTable";
 import { Modal } from "@/components/ui/Modal";
 import { SelectField, TextField } from "@/components/forms/fields";
 import { useActiveSales } from "@/features/sales/hooks/useActiveSales";
+import { useActiveProducts } from "@/features/products/hooks/useActiveProducts";
 import { ORDER_STATUS_LABEL, ORDER_STATUS_COLOR } from "@/features/orders/constants";
 import type { OrderWithDetails } from "@/features/orders/types/order.types";
 import type { AssignmentWithOrder } from "@/features/assignments/types/assignment.types";
@@ -16,6 +17,7 @@ export default function AssignmentsPage() {
   const { data: session } = useSession();
   const role = session?.user?.role;
   const salesList = useActiveSales();
+  const products = useActiveProducts();
   const [schedulingOrders, setSchedulingOrders] = useState<OrderWithDetails[]>([]);
   const [assignments, setAssignments] = useState<AssignmentWithOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -28,6 +30,10 @@ export default function AssignmentsPage() {
   const [rejectModalId, setRejectModalId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [actionError, setActionError] = useState("");
+
+  const [pickingModal, setPickingModal] = useState<AssignmentWithOrder | null>(null);
+  const [pickingQty, setPickingQty] = useState<Record<string, string>>({});
+  const [pickingSubmitting, setPickingSubmitting] = useState(false);
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
@@ -106,18 +112,69 @@ export default function AssignmentsPage() {
     fetchData();
   }
 
+  /**
+   * Ambil lokasi GPS perangkat sales sebelum check-in. Kalau izin ditolak,
+   * GPS tidak tersedia, atau browser tidak mendukung geolocation, tetap
+   * lanjutkan check-in TANPA koordinat (bukan diblokir) — sesuai keputusan
+   * bahwa validasi jarak di server bersifat soft/opsional, bukan wajib.
+   */
+  function getCurrentPosition(): Promise<{ latitude?: number; longitude?: number }> {
+    return new Promise((resolve) => {
+      if (typeof navigator === "undefined" || !navigator.geolocation) {
+        resolve({});
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (pos) => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
+        () => resolve({}), // izin ditolak / timeout / posisi tidak tersedia
+        { enableHighAccuracy: true, timeout: 8000 }
+      );
+    });
+  }
+
   async function handleCheckIn(id: string) {
     setActionError("");
+    const { latitude, longitude } = await getCurrentPosition();
     const res = await fetch(`/api/assignments/${id}/check-in`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({}),
+      body: JSON.stringify({ latitude, longitude }),
     });
     const json = await res.json();
     if (!res.ok) {
       setActionError(json.error ?? "Gagal check-in");
       return;
     }
+    fetchData();
+  }
+
+  function openPickingModal(a: AssignmentWithOrder) {
+    setActionError("");
+    const initialQty: Record<string, string> = {};
+    a.order?.details.forEach((d) => (initialQty[d.product_id] = String(d.quantity)));
+    setPickingQty(initialQty);
+    setPickingModal(a);
+  }
+
+  async function submitPickingConfirm() {
+    if (!pickingModal) return;
+    setPickingSubmitting(true);
+    const items = Object.entries(pickingQty).map(([product_id, qty]) => ({
+      product_id,
+      actual_quantity: Number(qty) || 0,
+    }));
+    const res = await fetch(`/api/assignments/${pickingModal.id}/picking`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items }),
+    });
+    const json = await res.json();
+    setPickingSubmitting(false);
+    if (!res.ok) {
+      setActionError(json.error ?? "Gagal konfirmasi picking");
+      return;
+    }
+    setPickingModal(null);
     fetchData();
   }
 
@@ -192,6 +249,15 @@ export default function AssignmentsPage() {
             </div>
           ) : (
             <span className="text-xs text-neutral-400">Menunggu sales</span>
+          );
+        }
+        if (a.status === "ready_to_picking") {
+          return !isSales ? (
+            <button type="button" onClick={() => openPickingModal(a)} className="text-sm font-medium text-forest-700 hover:underline">
+              Konfirmasi Picking
+            </button>
+          ) : (
+            <span className="text-xs text-neutral-400">Menunggu admin</span>
           );
         }
         if (a.status === "ready_to_delivery") {
@@ -325,6 +391,45 @@ export default function AssignmentsPage() {
             </button>
           </div>
         </form>
+      </Modal>
+
+      <Modal
+        title={`Konfirmasi Picking — ${pickingModal?.order?.order_number ?? ""}`}
+        open={!!pickingModal}
+        onClose={() => setPickingModal(null)}
+      >
+        <div className="space-y-3">
+          <p className="text-xs text-neutral-500">
+            Periksa jumlah aktual yang diserahkan ke sales. Selisih dari jumlah pesanan diperbolehkan (partial fulfillment).
+          </p>
+          {pickingModal?.order?.details.map((d) => (
+            <div key={d.id} className="flex items-center justify-between gap-2">
+              <span className="text-sm text-neutral-700">
+                {products.find((p) => p.id === d.product_id)?.name ?? d.product_id} (pesan: {d.quantity})
+              </span>
+              <input
+                type="number"
+                value={pickingQty[d.product_id] ?? ""}
+                onChange={(e) => setPickingQty((prev) => ({ ...prev, [d.product_id]: e.target.value }))}
+                className="w-24 rounded-md border border-neutral-300 px-2 py-1 text-sm"
+              />
+            </div>
+          ))}
+          {actionError && <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{actionError}</p>}
+          <div className="flex justify-end gap-2 pt-2">
+            <button type="button" onClick={() => setPickingModal(null)} className="rounded-md px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100">
+              Batal
+            </button>
+            <button
+              type="button"
+              onClick={submitPickingConfirm}
+              disabled={pickingSubmitting}
+              className="rounded-md bg-forest-700 px-4 py-2 text-sm font-medium text-white hover:bg-forest-600 disabled:opacity-50"
+            >
+              {pickingSubmitting ? "Menyimpan..." : "Konfirmasi Picking Selesai"}
+            </button>
+          </div>
+        </div>
       </Modal>
     </div>
   );
