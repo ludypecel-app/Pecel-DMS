@@ -17,10 +17,15 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials.password) return null;
 
+        console.log("[DEBUG] Mencoba login dengan email:", JSON.stringify(credentials.email));
+
         const user = await userService.getByEmailWithHash(credentials.email);
+        console.log("[DEBUG] Hasil pencarian user:", user ? JSON.stringify({ id: user.id, email: user.email, status: user.status, role: user.role, hashPrefix: user.password_hash?.slice(0, 7) }) : "TIDAK DITEMUKAN");
+
         if (!user || user.status !== "active") return null;
 
         const valid = await bcrypt.compare(credentials.password, user.password_hash);
+        console.log("[DEBUG] Hasil bcrypt.compare:", valid);
         if (!valid) return null;
 
         return {
