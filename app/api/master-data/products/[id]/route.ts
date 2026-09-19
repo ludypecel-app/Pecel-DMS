@@ -29,9 +29,14 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   }
 }
 
-export async function DELETE(_request: NextRequest, { params }: Params) {
+export async function DELETE(request: NextRequest, { params }: Params) {
   try {
     await requireAdmin();
+    const permanent = request.nextUrl.searchParams.get("permanent") === "true";
+    if (permanent) {
+      await productService.remove(params.id);
+      return NextResponse.json({ data: { id: params.id, deleted: true } });
+    }
     await productService.deactivate(params.id);
     return NextResponse.json({ data: { id: params.id, status: "inactive" } });
   } catch (error) {

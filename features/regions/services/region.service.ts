@@ -1,10 +1,13 @@
 import "server-only";
 import { SheetsRepository } from "@/lib/google-sheets/sheets-repository";
-import { REGION_TABLE } from "@/lib/google-sheets/tables";
+import { REGION_TABLE, WARUNG_TABLE, SALES_TABLE, ORDER_TABLE } from "@/lib/google-sheets/tables";
 import { regionSchema, type RegionInput } from "../validations/region.schema";
-import type { Region } from "@/types/entities";
+import type { Region, Warung, Sales, Order } from "@/types/entities";
 
 const repository = new SheetsRepository<Region>(REGION_TABLE);
+const warungRepository = new SheetsRepository<Warung>(WARUNG_TABLE);
+const salesRepository = new SheetsRepository<Sales>(SALES_TABLE);
+const orderRepository = new SheetsRepository<Order>(ORDER_TABLE);
 
 export const regionService = {
   async list(params?: { search?: string; status?: "active" | "inactive" }): Promise<Region[]> {
@@ -40,9 +43,36 @@ export const regionService = {
   },
 
   async deactivate(id: string): Promise<void> {
-    // Wilayah tidak dihapus fisik — hanya dinonaktifkan (soft delete).
-    // TODO Tahap 3+: sebelum nonaktif, cek relasi ke Warung aktif di wilayah ini
-    // dan tolak/beri peringatan bila masih ada, sesuai aturan bisnis yang disepakati.
+    // Wilayah tidak dihapus fisik lewat aksi Nonaktifkan — hanya status
+    // diubah jadi inactive (soft delete), supaya Warung/Sales/Pesanan lama
+    // yang masih merujuk wilayah ini via id tetap utuh datanya.
     return repository.softDelete(id);
+  },
+
+  /**
+   * Hapus permanen (hard delete) — hanya boleh kalau wilayah ini sudah
+   * tidak dirujuk oleh data lain sama sekali (Warung, Sales, atau Pesanan,
+   * aktif maupun tidak). Kalau masih ada yang merujuk, baris-baris itu akan
+   * jadi "yatim" (region_id/assigned_region_id menunjuk ke wilayah yang
+   * tidak ada) begitu dihapus, jadi permintaan ditolak dengan pesan jelas —
+   * pengguna diarahkan memakai Nonaktifkan saja.
+   */
+  async remove(id: string): Promise<void> {
+    const region = await repository.findById(id);
+    if (!region) throw new Error("Wilayah tidak ditemukan");
+
+    const [warungs, salesList, orders] = await Promise.all([
+      warungRepository.findAll({ region_id: id } as Partial<Warung>),
+      salesRepository.findAll({ assigned_region_id: id } as Partial<Sales>),
+      orderRepository.findAll({ region_id: id } as Partial<Order>),
+    ]);
+
+    if (warungs.length > 0 || salesList.length > 0 || orders.length > 0) {
+      throw new Error(
+        `Wilayah "${region.name}" masih dipakai oleh data Warung, Sales, dan/atau Pesanan lain — tidak bisa dihapus permanen. Gunakan Nonaktifkan agar riwayat data lain tetap aman.`
+      );
+    }
+
+    return repository.remove(id);
   },
 };

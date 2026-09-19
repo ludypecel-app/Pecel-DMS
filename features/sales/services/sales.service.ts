@@ -1,11 +1,14 @@
 import "server-only";
 import { SheetsRepository } from "@/lib/google-sheets/sheets-repository";
-import { SALES_TABLE, REGION_TABLE } from "@/lib/google-sheets/tables";
+import { SALES_TABLE, REGION_TABLE, USER_TABLE, ASSIGNMENT_TABLE, VISIT_TABLE } from "@/lib/google-sheets/tables";
 import { salesSchema, type SalesInput } from "../validations/sales.schema";
-import type { Sales, Region } from "@/types/entities";
+import type { Sales, Region, User, Assignment, Visit } from "@/types/entities";
 
 const repository = new SheetsRepository<Sales>(SALES_TABLE);
 const regionRepository = new SheetsRepository<Region>(REGION_TABLE);
+const userRepository = new SheetsRepository<User>(USER_TABLE);
+const assignmentRepository = new SheetsRepository<Assignment>(ASSIGNMENT_TABLE);
+const visitRepository = new SheetsRepository<Visit>(VISIT_TABLE);
 
 export const salesService = {
   async list(params?: {
@@ -51,5 +54,29 @@ export const salesService = {
 
   async deactivate(id: string): Promise<void> {
     return repository.softDelete(id);
+  },
+
+  /**
+   * Hapus permanen — ditolak kalau masih dirujuk oleh akun User (login
+   * sales), Penugasan, atau Kunjungan mana pun (riwayat lama tetap harus
+   * bisa menampilkan nama sales-nya).
+   */
+  async remove(id: string): Promise<void> {
+    const sales = await repository.findById(id);
+    if (!sales) throw new Error("Sales tidak ditemukan");
+
+    const [users, assignments, visits] = await Promise.all([
+      userRepository.findAll({ sales_id: id } as Partial<User>),
+      assignmentRepository.findAll({ sales_id: id } as Partial<Assignment>),
+      visitRepository.findAll({ sales_id: id } as Partial<Visit>),
+    ]);
+
+    if (users.length > 0 || assignments.length > 0 || visits.length > 0) {
+      throw new Error(
+        `Sales "${sales.name}" masih terhubung ke akun login, Penugasan, dan/atau Kunjungan lain — tidak bisa dihapus permanen. Gunakan Nonaktifkan agar riwayat data lain tetap aman.`
+      );
+    }
+
+    return repository.remove(id);
   },
 };

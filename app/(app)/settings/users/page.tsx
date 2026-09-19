@@ -102,6 +102,17 @@ export default function UsersPage() {
     fetchUsers();
   }
 
+  async function handleDelete(user: UserRow) {
+    if (!window.confirm(`Hapus permanen user "${user.name}"? Tindakan ini tidak bisa dibatalkan.`)) return;
+    const res = await fetch(`/api/users/${user.id}?permanent=true`, { method: "DELETE" });
+    const json = await res.json();
+    if (!res.ok) {
+      window.alert(json.error ?? "Gagal menghapus data");
+      return;
+    }
+    fetchUsers();
+  }
+
   function salesName(id?: string) {
     return salesList.find((s) => s.id === id)?.name ?? "-";
   }
@@ -122,6 +133,9 @@ export default function UsersPage() {
           </button>
           <button type="button" onClick={() => handleToggleStatus(u)} className="text-sm font-medium text-neutral-500 hover:underline">
             {u.status === "active" ? "Nonaktifkan" : "Aktifkan"}
+          </button>
+          <button type="button" onClick={() => handleDelete(u)} className="text-sm font-medium text-red-600 hover:underline">
+            Hapus
           </button>
         </div>
       ),

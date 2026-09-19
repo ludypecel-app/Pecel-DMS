@@ -98,6 +98,17 @@ export default function RegionsPage() {
     fetchRegions();
   }
 
+  async function handleDelete(region: Region) {
+    if (!window.confirm(`Hapus permanen wilayah "${region.name}"? Tindakan ini tidak bisa dibatalkan.`)) return;
+    const res = await fetch(`/api/master-data/regions/${region.id}?permanent=true`, { method: "DELETE" });
+    const json = await res.json();
+    if (!res.ok) {
+      window.alert(json.error ?? "Gagal menghapus data");
+      return;
+    }
+    fetchRegions();
+  }
+
   const columns: Column<Region>[] = [
     { key: "code", header: "Kode", render: (r) => r.code },
     { key: "name", header: "Nama Wilayah", render: (r) => r.name },
@@ -120,6 +131,13 @@ export default function RegionsPage() {
             className="text-sm font-medium text-neutral-500 hover:underline"
           >
             {r.status === "active" ? "Nonaktifkan" : "Aktifkan"}
+          </button>
+          <button
+            type="button"
+            onClick={() => handleDelete(r)}
+            className="text-sm font-medium text-red-600 hover:underline"
+          >
+            Hapus
           </button>
         </div>
       ),

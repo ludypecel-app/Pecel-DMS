@@ -1,10 +1,12 @@
 import "server-only";
 import { SheetsRepository } from "@/lib/google-sheets/sheets-repository";
-import { PRODUCT_TABLE } from "@/lib/google-sheets/tables";
+import { PRODUCT_TABLE, ORDER_DETAIL_TABLE, STOCK_TRANSACTION_TABLE } from "@/lib/google-sheets/tables";
 import { productSchema, type ProductInput } from "../validations/product.schema";
-import type { Product } from "@/types/entities";
+import type { Product, OrderDetail, StockTransaction } from "@/types/entities";
 
 const repository = new SheetsRepository<Product>(PRODUCT_TABLE);
+const orderDetailRepository = new SheetsRepository<OrderDetail>(ORDER_DETAIL_TABLE);
+const stockTxRepository = new SheetsRepository<StockTransaction>(STOCK_TRANSACTION_TABLE);
 
 export const productService = {
   async list(params?: { search?: string; status?: "active" | "inactive" }): Promise<Product[]> {
@@ -41,5 +43,24 @@ export const productService = {
 
   async deactivate(id: string): Promise<void> {
     return repository.softDelete(id);
+  },
+
+  /** Hapus permanen — ditolak kalau produk masih dipakai di detail Pesanan atau riwayat stok mana pun. */
+  async remove(id: string): Promise<void> {
+    const product = await repository.findById(id);
+    if (!product) throw new Error("Produk tidak ditemukan");
+
+    const [orderDetails, stockTx] = await Promise.all([
+      orderDetailRepository.findAll({ product_id: id } as Partial<OrderDetail>),
+      stockTxRepository.findAll({ product_id: id } as Partial<StockTransaction>),
+    ]);
+
+    if (orderDetails.length > 0 || stockTx.length > 0) {
+      throw new Error(
+        `Produk "${product.name}" masih dipakai di detail Pesanan dan/atau riwayat stok — tidak bisa dihapus permanen. Gunakan Nonaktifkan agar riwayat data lain tetap aman.`
+      );
+    }
+
+    return repository.remove(id);
   },
 };

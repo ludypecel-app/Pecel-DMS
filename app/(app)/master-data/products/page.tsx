@@ -104,6 +104,17 @@ export default function ProductsPage() {
     fetchProducts();
   }
 
+  async function handleDelete(product: Product) {
+    if (!window.confirm(`Hapus permanen produk "${product.name}"? Tindakan ini tidak bisa dibatalkan.`)) return;
+    const res = await fetch(`/api/master-data/products/${product.id}?permanent=true`, { method: "DELETE" });
+    const json = await res.json();
+    if (!res.ok) {
+      window.alert(json.error ?? "Gagal menghapus data");
+      return;
+    }
+    fetchProducts();
+  }
+
   const formatPrice = (n: number) =>
     new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(n);
 
@@ -123,6 +134,9 @@ export default function ProductsPage() {
           </button>
           <button type="button" onClick={() => handleToggleStatus(p)} className="text-sm font-medium text-neutral-500 hover:underline">
             {p.status === "active" ? "Nonaktifkan" : "Aktifkan"}
+          </button>
+          <button type="button" onClick={() => handleDelete(p)} className="text-sm font-medium text-red-600 hover:underline">
+            Hapus
           </button>
         </div>
       ),

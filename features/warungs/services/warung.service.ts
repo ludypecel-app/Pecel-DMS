@@ -1,11 +1,13 @@
 import "server-only";
 import { SheetsRepository } from "@/lib/google-sheets/sheets-repository";
-import { WARUNG_TABLE, REGION_TABLE } from "@/lib/google-sheets/tables";
+import { WARUNG_TABLE, REGION_TABLE, ORDER_TABLE, VISIT_TABLE } from "@/lib/google-sheets/tables";
 import { warungSchema, type WarungInput } from "../validations/warung.schema";
-import type { Warung, Region } from "@/types/entities";
+import type { Warung, Region, Order, Visit } from "@/types/entities";
 
 const repository = new SheetsRepository<Warung>(WARUNG_TABLE);
 const regionRepository = new SheetsRepository<Region>(REGION_TABLE);
+const orderRepository = new SheetsRepository<Order>(ORDER_TABLE);
+const visitRepository = new SheetsRepository<Visit>(VISIT_TABLE);
 
 export const warungService = {
   async list(params?: {
@@ -56,5 +58,24 @@ export const warungService = {
 
   async deactivate(id: string): Promise<void> {
     return repository.softDelete(id);
+  },
+
+  /** Hapus permanen — ditolak kalau masih dirujuk oleh Pesanan atau Kunjungan mana pun. */
+  async remove(id: string): Promise<void> {
+    const warung = await repository.findById(id);
+    if (!warung) throw new Error("Warung tidak ditemukan");
+
+    const [orders, visits] = await Promise.all([
+      orderRepository.findAll({ warung_id: id } as Partial<Order>),
+      visitRepository.findAll({ warung_id: id } as Partial<Visit>),
+    ]);
+
+    if (orders.length > 0 || visits.length > 0) {
+      throw new Error(
+        `Warung "${warung.name}" masih memiliki riwayat Pesanan dan/atau Kunjungan — tidak bisa dihapus permanen. Gunakan Nonaktifkan agar riwayat data lain tetap aman.`
+      );
+    }
+
+    return repository.remove(id);
   },
 };

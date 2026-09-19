@@ -29,9 +29,17 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   }
 }
 
-export async function DELETE(_request: NextRequest, { params }: Params) {
+export async function DELETE(request: NextRequest, { params }: Params) {
   try {
     await requireAdmin();
+    // ?permanent=true -> hapus permanen (ditolak kalau masih dirujuk data
+    // lain, lihat regionService.remove). Tanpa parameter itu -> perilaku
+    // lama: nonaktifkan (soft delete), dipakai tombol "Nonaktifkan".
+    const permanent = request.nextUrl.searchParams.get("permanent") === "true";
+    if (permanent) {
+      await regionService.remove(params.id);
+      return NextResponse.json({ data: { id: params.id, deleted: true } });
+    }
     await regionService.deactivate(params.id);
     return NextResponse.json({ data: { id: params.id, status: "inactive" } });
   } catch (error) {

@@ -95,4 +95,32 @@ export const userService = {
   async deactivate(id: string): Promise<void> {
     return repository.softDelete(id);
   },
+
+  /**
+   * Hapus permanen — dengan dua pengaman: tidak bisa menghapus akun sendiri
+   * yang sedang dipakai login (`actorId`), dan tidak bisa menghapus admin
+   * aktif terakhir (supaya sistem tidak pernah kehilangan akses admin sama
+   * sekali). Tidak ada entitas lain yang bergantung langsung pada User.id
+   * untuk fungsi apa pun (relasi Sales<->User dipegang oleh User.sales_id,
+   * bukan sebaliknya), jadi tidak perlu cek referensi tambahan seperti pada
+   * Wilayah/Sales/Warung/Produk.
+   */
+  async remove(id: string, actorId?: string): Promise<void> {
+    const user = await repository.findById(id);
+    if (!user) throw new Error("User tidak ditemukan");
+
+    if (actorId && actorId === id) {
+      throw new Error("Anda tidak bisa menghapus akun Anda sendiri yang sedang login.");
+    }
+
+    if (user.role === "admin") {
+      const activeAdmins = await repository.findAll({ role: "admin", status: "active" } as Partial<User>);
+      const otherActiveAdmins = activeAdmins.filter((a) => a.id !== id);
+      if (otherActiveAdmins.length === 0) {
+        throw new Error("Tidak bisa menghapus admin aktif terakhir — sistem harus selalu punya minimal satu admin.");
+      }
+    }
+
+    return repository.remove(id);
+  },
 };

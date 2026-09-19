@@ -118,6 +118,17 @@ export default function WarungsPage() {
     fetchItems();
   }
 
+  async function handleDelete(warung: Warung) {
+    if (!window.confirm(`Hapus permanen warung "${warung.name}"? Tindakan ini tidak bisa dibatalkan.`)) return;
+    const res = await fetch(`/api/master-data/warungs/${warung.id}?permanent=true`, { method: "DELETE" });
+    const json = await res.json();
+    if (!res.ok) {
+      window.alert(json.error ?? "Gagal menghapus data");
+      return;
+    }
+    fetchItems();
+  }
+
   const columns: Column<Warung>[] = [
     { key: "name", header: "Nama Warung", render: (w) => w.name },
     { key: "region", header: "Wilayah", render: (w) => regionName(w.region_id) },
@@ -133,6 +144,9 @@ export default function WarungsPage() {
           </button>
           <button type="button" onClick={() => handleToggleStatus(w)} className="text-sm font-medium text-neutral-500 hover:underline">
             {w.status === "active" ? "Nonaktifkan" : "Aktifkan"}
+          </button>
+          <button type="button" onClick={() => handleDelete(w)} className="text-sm font-medium text-red-600 hover:underline">
+            Hapus
           </button>
         </div>
       ),

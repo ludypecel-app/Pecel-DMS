@@ -112,6 +112,17 @@ export default function SalesPage() {
     fetchItems();
   }
 
+  async function handleDelete(sales: Sales) {
+    if (!window.confirm(`Hapus permanen sales "${sales.name}"? Tindakan ini tidak bisa dibatalkan.`)) return;
+    const res = await fetch(`/api/master-data/sales/${sales.id}?permanent=true`, { method: "DELETE" });
+    const json = await res.json();
+    if (!res.ok) {
+      window.alert(json.error ?? "Gagal menghapus data");
+      return;
+    }
+    fetchItems();
+  }
+
   const columns: Column<Sales>[] = [
     { key: "name", header: "Nama Sales", render: (s) => s.name },
     { key: "phone", header: "Telepon", render: (s) => s.phone, hideOnMobile: true },
@@ -127,6 +138,9 @@ export default function SalesPage() {
           </button>
           <button type="button" onClick={() => handleToggleStatus(s)} className="text-sm font-medium text-neutral-500 hover:underline">
             {s.status === "active" ? "Nonaktifkan" : "Aktifkan"}
+          </button>
+          <button type="button" onClick={() => handleDelete(s)} className="text-sm font-medium text-red-600 hover:underline">
+            Hapus
           </button>
         </div>
       ),
@@ -183,7 +197,7 @@ export default function SalesPage() {
             error={errors.assigned_region_id}
             options={regions.map((r) => ({ value: r.id, label: r.name }))}
           />
-          <TextField label="ID User (opsional, dihubungkan di Tahap 8)" value={form.user_id} onChange={(v) => setForm((f) => ({ ...f, user_id: v }))} error={errors.user_id} />
+          <TextField label="ID User (opsional)" value={form.user_id} onChange={(v) => setForm((f) => ({ ...f, user_id: v }))} error={errors.user_id} placeholder="Biasanya tidak perlu diisi manual" />
           <div className="flex justify-end gap-2 pt-2">
             <button type="button" onClick={() => setModalOpen(false)} className="rounded-md px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100">
               Batal
