@@ -17,30 +17,19 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials.password) return null;
 
-        console.log("[DEBUG] Mencoba login dengan email:", JSON.stringify(credentials.email));
-console.log("[DEBUG] Password diterima - panjang:", credentials.password.length, "isi:", JSON.stringify(credentials.password));
+        const user = await userService.getByEmailWithHash(credentials.email);
+        if (!user || user.status !== "active") return null;
 
-        try {
-          const user = await userService.getByEmailWithHash(credentials.email);
-          console.log("[DEBUG] Hasil pencarian user:", user ? JSON.stringify({ id: user.id, email: user.email, status: user.status, role: user.role, fullHash: user.password_hash }) : "TIDAK DITEMUKAN");
+        const valid = await bcrypt.compare(credentials.password, user.password_hash);
+        if (!valid) return null;
 
-          if (!user || user.status !== "active") return null;
-
-          const valid = await bcrypt.compare(credentials.password, user.password_hash);
-          console.log("[DEBUG] Hasil bcrypt.compare:", valid);
-          if (!valid) return null;
-
-          return {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            salesId: user.sales_id,
-          };
-        } catch (err) {
-          console.log("[DEBUG] ERROR saat proses login:", err instanceof Error ? err.stack ?? err.message : String(err));
-          return null;
-        }
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          salesId: user.sales_id,
+        };
       },
     }),
   ],
