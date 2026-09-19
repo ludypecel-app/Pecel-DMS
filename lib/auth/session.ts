@@ -5,7 +5,11 @@ import { authOptions } from "./auth-options";
 /** Session user saat ini, atau null jika belum login. Dipakai API routes & layout. */
 export async function getCurrentUser() {
   const session = await getServerSession(authOptions);
-  return session?.user ?? null;
+  // `role` dikosongkan oleh callback jwt() di auth-options.ts kalau akun
+  // ini sudah dinonaktifkan/dihapus sejak token diterbitkan — perlakukan
+  // sama seperti belum login, walau cookie sesinya sendiri masih ada.
+  if (!session?.user?.role) return null;
+  return session.user;
 }
 
 /** Sama seperti getCurrentUser, tapi melempar error jika belum login — untuk API routes yang wajib auth. */

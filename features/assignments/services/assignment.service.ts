@@ -141,7 +141,12 @@ export const assignmentService = {
     });
 
     await notificationService.send({
-      userId: assignment.assigned_by,
+      // "admin" (bukan assignment.assigned_by, yang berisi UUID admin
+      // pembuat tugas) — inbox notifikasi admin memakai user_id literal
+      // "admin" bersama (lihat notification.service.ts / types/entities.ts),
+      // jadi mengirim UUID di sini membuat notifikasi ini tidak pernah
+      // muncul untuk admin manapun.
+      userId: "admin",
       type: "assignment_accepted",
       message: `Penugasan untuk pesanan telah diterima sales.`,
       link: `/assignments/${id}`,
@@ -188,7 +193,7 @@ export const assignmentService = {
     });
 
     await notificationService.send({
-      userId: assignment.assigned_by,
+      userId: "admin", // lihat catatan di notifikasi "assignment_accepted" di atas
       type: "assignment_rejected",
       message: `Sales menolak penugasan. Alasan: ${reason}`,
       link: `/assignments/${id}`,
@@ -212,6 +217,17 @@ export const assignmentService = {
     }
 
     const { items } = confirmPickingSchema.parse(input);
+
+    // Validasi setiap product_id benar-benar bagian dari pesanan ini —
+    // tanpa ini, id produk yang salah ketik/basi akan lolos dan tercatat
+    // sebagai StockTransaction picking_out untuk produk yang sama sekali
+    // tidak dipesan, mencemari data stok lapangan & dashboard tanpa error
+    // apa pun (sama seperti validasi yang sudah ada di visitService.checkOut).
+    const orderDetails = await orderDetailRepo.findAll({ order_id: assignment.order_id } as Partial<OrderDetail>);
+    for (const item of items) {
+      const detail = orderDetails.find((d) => d.product_id === item.product_id);
+      if (!detail) throw new Error(`Produk "${item.product_id}" bukan bagian dari pesanan ini`);
+    }
 
     await Promise.all(
       items.map((item) =>
@@ -312,7 +328,7 @@ export const assignmentService = {
     });
 
     await notificationService.send({
-      userId: assignment.assigned_by,
+      userId: "admin", // lihat catatan di notifikasi "assignment_accepted" di atas
       type: "sales_arrived",
       message: "Sales telah sampai di lokasi warung.",
       link: `/assignments/${id}`,

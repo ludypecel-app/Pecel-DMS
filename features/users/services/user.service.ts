@@ -55,16 +55,35 @@ export const userService = {
     return omitPasswordHash(created);
   },
 
+  /**
+   * PENTING: hanya field yang benar-benar dikirim (bukan undefined) yang
+   * dimasukkan ke `patch`. Ini mencegah bug lama: memanggil update() hanya
+   * dengan { status: "active" } (misalnya dari tombol Aktifkan/Nonaktifkan)
+   * dulu ikut menimpa name/email/role/sales_id menjadi kosong, karena
+   * object spread ({ ...existing, ...patch }) di SheetsRepository.update()
+   * tetap menimpa nilai existing kalau key-nya ada di patch walau nilainya
+   * undefined.
+   */
   async update(id: string, input: unknown): Promise<Omit<User, "password_hash">> {
     const data: UpdateUserInput = updateUserSchema.parse(input);
 
-    const patch: Partial<User> = {
-      name: data.name,
-      email: data.email,
-      role: data.role,
-      sales_id: data.sales_id,
-      status: data.status,
-    };
+    if (data.email !== undefined) {
+      // Sama seperti create(): tolak email yang sudah dipakai user lain.
+      // Tanpa cek ini, dua user bisa berakhir dengan email yang sama —
+      // login jadi tidak bisa diprediksi karena getByEmailWithHash() cuma
+      // mengembalikan baris pertama yang cocok.
+      const existing = await repository.findAll({ email: data.email } as Partial<User>);
+      if (existing.some((u) => u.id !== id)) {
+        throw new Error(`Email "${data.email}" sudah dipakai user lain`);
+      }
+    }
+
+    const patch: Partial<User> = {};
+    if (data.name !== undefined) patch.name = data.name;
+    if (data.email !== undefined) patch.email = data.email;
+    if (data.role !== undefined) patch.role = data.role;
+    if (data.sales_id !== undefined) patch.sales_id = data.sales_id;
+    if (data.status !== undefined) patch.status = data.status;
     if (data.password) {
       patch.password_hash = await bcrypt.hash(data.password, 10);
     }

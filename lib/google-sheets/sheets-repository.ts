@@ -28,8 +28,15 @@ function rowToObject<T>(headers: string[], row: string[]): T {
     // Konversi ringan: angka & boolean dikembalikan sebagai tipe aslinya.
     if (raw === "") obj[header] = undefined;
     else if (raw === "true" || raw === "false") obj[header] = raw === "true";
-    else if (!Number.isNaN(Number(raw)) && raw.trim() !== "") obj[header] = Number(raw);
-    else obj[header] = raw;
+    // Round-trip check (String(Number(raw)) === raw) sebelum mengonversi ke
+    // Number: mencegah nilai teks yang "terlihat" numerik tapi harus tetap
+    // string kehilangan makna aslinya — contoh nyata: nomor telepon/kode
+    // dengan angka nol di depan ("081234567890" atau "007") akan menjadi
+    // 81234567890 / 7 kalau langsung di-Number()-kan. Angka asli (harga,
+    // qty, lat/lng) tetap lolos konversi karena round-trip-nya cocok.
+    else if (raw.trim() !== "" && !Number.isNaN(Number(raw)) && String(Number(raw)) === raw) {
+      obj[header] = Number(raw);
+    } else obj[header] = raw;
   });
   return obj as T;
 }
@@ -138,9 +145,22 @@ export class SheetsRepository<T extends BaseEntity> implements Repository<T> {
     }
 
     const existing = rowToObject<T>(this.table.columns, dataRows[rowIndex]!);
+
+    // PENTING: buang key yang nilainya `undefined` dari `data` sebelum
+    // digabung ke `existing`. Tanpa ini, field yang tidak dikirim tapi
+    // tetap "ada" sebagai key (mis. dari objek literal manual, atau dari
+    // hasil parsing Zod untuk field optional yang tidak diisi) akan
+    // menimpa nilai lama menjadi kosong lewat object spread — walau
+    // caller cuma bermaksud mengubah satu field saja (contoh nyata: klik
+    // tombol Aktifkan/Nonaktifkan user yang cuma mengirim { status },
+    // tapi name/email/role ikut hilang).
+    const cleanData = Object.fromEntries(
+      Object.entries(data as Record<string, unknown>).filter(([, v]) => v !== undefined)
+    ) as Partial<T>;
+
     const updated = {
       ...existing,
-      ...data,
+      ...cleanData,
       updated_at: new Date().toISOString(),
     } as T;
 

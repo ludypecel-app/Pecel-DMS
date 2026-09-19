@@ -181,7 +181,7 @@ export default function ProductsPage() {
           <TextField label="Kode Produk" value={form.code} onChange={(v) => setForm((f) => ({ ...f, code: v }))} error={errors.code} placeholder="mis. PCL-001" />
           <TextField label="Nama Produk" value={form.name} onChange={(v) => setForm((f) => ({ ...f, name: v }))} error={errors.name} placeholder="mis. Pecel Original 250gr" />
           <TextField label="Satuan" value={form.unit} onChange={(v) => setForm((f) => ({ ...f, unit: v }))} error={errors.unit} placeholder="mis. pack" />
-          <TextField label="Harga (Rp)" type="number" value={form.price} onChange={(v) => setForm((f) => ({ ...f, price: v }))} error={errors.price} placeholder="mis. 15000" />
+          <TextField label="Harga" type="currency" value={form.price} onChange={(v) => setForm((f) => ({ ...f, price: v }))} error={errors.price} placeholder="mis. 15.000" />
           <div className="flex justify-end gap-2 pt-2">
             <button type="button" onClick={() => setModalOpen(false)} className="rounded-md px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100">
               Batal

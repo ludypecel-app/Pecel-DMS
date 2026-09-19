@@ -36,8 +36,27 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
+        // Baru saja login — data dari authorize() sudah pasti akun aktif.
         token.role = (user as unknown as { role: "admin" | "sales" }).role;
         token.salesId = (user as unknown as { salesId?: string }).salesId;
+      } else if (token.sub) {
+        // Request selanjutnya (bukan saat sign-in): cek ulang status akun
+        // ke Google Sheets setiap kali sesi dibaca di server (getServerSession
+        // dipanggil dari requireUser/requireAdmin di tiap API route). Tanpa
+        // ini, admin yang menonaktifkan seorang user tidak benar-benar
+        // mencegah user itu terus memakai API — token JWT lama tetap sah
+        // sampai masa berlakunya habis (berminggu-minggu) walau akunnya
+        // sudah dinonaktifkan. Biaya tambahan: satu pembacaan sheet User
+        // per pengecekan sesi, diringankan oleh cache 15 detik di
+        // SheetsRepository.
+        const current = await userService.getById(token.sub);
+        if (!current || current.status !== "active") {
+          token.role = undefined;
+          token.salesId = undefined;
+        } else {
+          token.role = current.role;
+          token.salesId = current.sales_id;
+        }
       }
       return token;
     },

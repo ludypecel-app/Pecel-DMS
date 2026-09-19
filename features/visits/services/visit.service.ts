@@ -195,7 +195,9 @@ export const visitService = {
     });
 
     await notificationService.send({
-      userId: assignment.assigned_by,
+      // "admin" (bukan assignment.assigned_by / UUID admin pembuat tugas) —
+      // inbox notifikasi admin memakai user_id literal "admin" bersama.
+      userId: "admin",
       type: "visit_checked_out",
       message: `Sales menyelesaikan kunjungan untuk pesanan ${order.order_number}. Menunggu konfirmasi Anda.`,
       link: `/assignments/${assignmentId}`,
