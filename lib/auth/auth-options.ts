@@ -18,6 +18,7 @@ export const authOptions: NextAuthOptions = {
         if (!credentials?.email || !credentials.password) return null;
 
         console.log("[DEBUG] Mencoba login dengan email:", JSON.stringify(credentials.email));
+console.log("[DEBUG] Password diterima - panjang:", credentials.password.length, "isi:", JSON.stringify(credentials.password));
 
         try {
           const user = await userService.getByEmailWithHash(credentials.email);
