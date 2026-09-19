@@ -16,7 +16,7 @@ function FieldWrapper({ label, error, children }: FieldWrapperProps) {
   );
 }
 
-interface TextFieldProps extends FieldWrapperProps {
+interface TextFieldProps extends Omit<FieldWrapperProps, "children"> {
   value: string;
   onChange: (value: string) => void;
   type?: "text" | "number" | "tel" | "date";
@@ -37,7 +37,7 @@ export function TextField({ label, error, value, onChange, type = "text", placeh
   );
 }
 
-interface SelectFieldProps extends FieldWrapperProps {
+interface SelectFieldProps extends Omit<FieldWrapperProps, "children"> {
   value: string;
   onChange: (value: string) => void;
   options: { value: string; label: string }[];

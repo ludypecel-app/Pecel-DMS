@@ -49,7 +49,14 @@ export default function VisitDataEntryPage() {
   }, [fetchForm]);
 
   function updateRow(productId: string, patch: Partial<RowState>) {
-    setRows((prev) => ({ ...prev, [productId]: { ...prev[productId], ...patch } }));
+    setRows((prev) => {
+      const current = prev[productId] ?? { sold: "0", returned: "0" };
+      const next: RowState = {
+        sold: patch.sold ?? current.sold,
+        returned: patch.returned ?? current.returned,
+      };
+      return { ...prev, [productId]: next };
+    });
   }
 
   const computed = useMemo(() => {

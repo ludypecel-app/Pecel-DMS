@@ -37,7 +37,16 @@ export default function NewOrderPage() {
   }
 
   function updateItemRow(index: number, patch: Partial<ItemRow>) {
-    setItems((prev) => prev.map((row, i) => (i === index ? { ...row, ...patch } : row)));
+    setItems((prev) =>
+      prev.map((row, i) =>
+        i === index
+          ? {
+              product_id: patch.product_id ?? row.product_id,
+              quantity: patch.quantity ?? row.quantity,
+            }
+          : row
+      )
+    );
   }
 
   const selectedWarung = warungs.find((w) => w.id === warungId);

@@ -2,7 +2,7 @@ import "server-only";
 import { getSheetsClient } from "./client";
 import { generateId } from "@/lib/utils/id";
 import type { Repository } from "./repository";
-import type { ActiveStatus, BaseEntity } from "@/types/entities";
+import type { BaseEntity } from "@/types/entities";
 
 interface SheetTable {
   spreadsheetId: string;
@@ -53,9 +53,7 @@ function objectToRow(headers: string[], obj: Record<string, unknown>): string[] 
  *   untuk MVP ini cukup, evaluasi ulang jika volume edit bersamaan tinggi.
  * - `softDelete` mengubah `status` jadi "inactive", tidak menghapus baris.
  */
-export class SheetsRepository<T extends BaseEntity & { status?: ActiveStatus }>
-  implements Repository<T>
-{
+export class SheetsRepository<T extends BaseEntity> implements Repository<T> {
   constructor(private table: SheetTable) {}
 
   private get client() {
@@ -139,12 +137,12 @@ export class SheetsRepository<T extends BaseEntity & { status?: ActiveStatus }>
       throw new Error(`Record dengan id "${id}" tidak ditemukan di ${this.table.sheetName}`);
     }
 
-    const existing = rowToObject<T>(this.table.columns, dataRows[rowIndex]);
-    const updated: T = {
+    const existing = rowToObject<T>(this.table.columns, dataRows[rowIndex]!);
+    const updated = {
       ...existing,
       ...data,
       updated_at: new Date().toISOString(),
-    };
+    } as T;
 
     const sheetRowNumber = rowIndex + 2; // +1 header, +1 karena index mulai 0
     await this.client.spreadsheets.values.update({
@@ -164,7 +162,7 @@ export class SheetsRepository<T extends BaseEntity & { status?: ActiveStatus }>
 
   /** Soft delete: master data tidak pernah dihapus fisik, hanya dinonaktifkan. */
   async softDelete(id: string): Promise<void> {
-    await this.update(id, { status: "inactive" } as Partial<T>);
+    await this.update(id, { status: "inactive" } as unknown as Partial<T>);
   }
 
   /**
