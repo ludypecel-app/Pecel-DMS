@@ -16,7 +16,11 @@ export interface Region extends BaseEntity {
 }
 
 export interface Sales extends BaseEntity {
-  user_id: string;
+  // Opsional: field ini vestigial (tidak dipakai untuk relasi apa pun secara
+  // fungsional — relasi login yang sebenarnya dipegang oleh User.sales_id,
+  // bukan sebaliknya). Dibuat optional supaya "Tambah Sales" bisa disimpan
+  // tanpa mengisi UUID user secara manual.
+  user_id?: string;
   name: string;
   phone: string;
   assigned_region_id: string;
