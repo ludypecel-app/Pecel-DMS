@@ -12,7 +12,7 @@ import type { Product } from "@/types/entities";
 
 type StatusFilter = "" | "active" | "inactive";
 
-const emptyForm = { code: "", name: "", unit: "", price: "" };
+const emptyForm = { name: "", unit: "", price: "" };
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -61,7 +61,6 @@ export default function ProductsPage() {
   function openEditModal(product: Product) {
     setEditing(product);
     setForm({
-      code: product.code,
       name: product.name,
       unit: product.unit,
       price: String(product.price),
@@ -212,7 +211,13 @@ export default function ProductsPage() {
       <Modal title={editing ? "Edit Produk" : "Tambah Produk"} open={modalOpen} onClose={() => setModalOpen(false)}>
         <form onSubmit={handleSubmit} className="space-y-3">
           {errors._form && <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{errors._form}</p>}
-          <TextField label="Kode Produk" value={form.code} onChange={(v) => setForm((f) => ({ ...f, code: v }))} error={errors.code} placeholder="mis. PCL-001" required />
+          {editing ? (
+            <p className="-mt-1 text-xs text-ink-muted">
+              Kode Produk: <span className="font-medium text-ink">{editing.code}</span> (dibuat otomatis oleh sistem, tidak bisa diubah)
+            </p>
+          ) : (
+            <p className="-mt-1 text-xs text-ink-muted">Kode produk akan dibuat otomatis oleh sistem setelah disimpan.</p>
+          )}
           <TextField label="Nama Produk" value={form.name} onChange={(v) => setForm((f) => ({ ...f, name: v }))} error={errors.name} placeholder="mis. Pecel Original 250gr" required />
           <TextField label="Satuan" value={form.unit} onChange={(v) => setForm((f) => ({ ...f, unit: v }))} error={errors.unit} placeholder="mis. pack" required />
           <TextField label="Harga" type="currency" value={form.price} onChange={(v) => setForm((f) => ({ ...f, price: v }))} error={errors.price} placeholder="mis. 15.000" required />

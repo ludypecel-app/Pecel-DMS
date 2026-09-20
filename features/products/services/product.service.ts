@@ -2,6 +2,7 @@ import "server-only";
 import { SheetsRepository } from "@/lib/google-sheets/sheets-repository";
 import { PRODUCT_TABLE, ORDER_DETAIL_TABLE, STOCK_TRANSACTION_TABLE } from "@/lib/google-sheets/tables";
 import { productSchema, type ProductInput } from "../validations/product.schema";
+import { generateNextCode } from "@/lib/utils/id";
 import type { Product, OrderDetail, StockTransaction } from "@/types/entities";
 
 const repository = new SheetsRepository<Product>(PRODUCT_TABLE);
@@ -25,19 +26,23 @@ export const productService = {
     return repository.findById(id);
   },
 
+  /** Kode produk (mis. "PRD-001") digenerate otomatis — bukan input manual admin. */
   async create(input: unknown): Promise<Product> {
     const data: ProductInput = productSchema.parse(input);
-    const existing = await repository.findAll({ code: data.code } as Partial<Product>);
-    if (existing.length > 0) {
-      throw new Error(`Kode produk "${data.code}" sudah digunakan`);
-    }
-    return repository.create(data);
+    const existing = await repository.findAll();
+    const code = generateNextCode(
+      existing.map((p) => p.code).filter((c): c is string => !!c),
+      "PRD"
+    );
+    return repository.create({ ...data, code });
   },
 
   async update(id: string, input: unknown): Promise<Product> {
     // Catatan: mengubah `price` di sini tidak mengubah harga transaksi lama —
     // OrderDetail membekukan unit_price sendiri saat pesanan dibuat (Tahap 3).
+    // Kode produk tidak bisa diubah setelah dibuat — field `code` diabaikan bila ada.
     const data = productSchema.partial().parse(input) as Partial<ProductInput>;
+    delete data.code;
     return repository.update(id, data);
   },
 

@@ -20,7 +20,7 @@ export default function RegionsPage() {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Region | null>(null);
-  const [form, setForm] = useState({ code: "", name: "" });
+  const [form, setForm] = useState({ name: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
 
@@ -55,14 +55,14 @@ export default function RegionsPage() {
 
   function openCreateModal() {
     setEditing(null);
-    setForm({ code: "", name: "" });
+    setForm({ name: "" });
     setErrors({});
     setModalOpen(true);
   }
 
   function openEditModal(region: Region) {
     setEditing(region);
-    setForm({ code: region.code, name: region.name });
+    setForm({ name: region.name });
     setErrors({});
     setModalOpen(true);
   }
@@ -221,14 +221,13 @@ export default function RegionsPage() {
           {errors._form && (
             <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{errors._form}</p>
           )}
-          <TextField
-            label="Kode Wilayah"
-            value={form.code}
-            onChange={(v) => setForm((f) => ({ ...f, code: v }))}
-            error={errors.code}
-            placeholder="mis. MLG-01"
-            required
-          />
+          {editing ? (
+            <p className="-mt-1 text-xs text-ink-muted">
+              Kode Wilayah: <span className="font-medium text-ink">{editing.code}</span> (dibuat otomatis oleh sistem, tidak bisa diubah)
+            </p>
+          ) : (
+            <p className="-mt-1 text-xs text-ink-muted">Kode wilayah akan dibuat otomatis oleh sistem setelah disimpan.</p>
+          )}
           <TextField
             label="Nama Wilayah"
             value={form.name}

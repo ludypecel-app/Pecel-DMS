@@ -2,6 +2,7 @@ import "server-only";
 import { SheetsRepository } from "@/lib/google-sheets/sheets-repository";
 import { REGION_TABLE, WARUNG_TABLE, SALES_TABLE, ORDER_TABLE } from "@/lib/google-sheets/tables";
 import { regionSchema, type RegionInput } from "../validations/region.schema";
+import { generateNextCode } from "@/lib/utils/id";
 import type { Region, Warung, Sales, Order } from "@/types/entities";
 
 const repository = new SheetsRepository<Region>(REGION_TABLE);
@@ -28,18 +29,22 @@ export const regionService = {
     return repository.findById(id);
   },
 
+  /** Kode wilayah (mis. "WIL-001") digenerate otomatis — bukan input manual admin. */
   async create(input: unknown): Promise<Region> {
     const data: RegionInput = regionSchema.parse(input);
-    const existing = await repository.findAll({ code: data.code } as Partial<Region>);
-    if (existing.length > 0) {
-      throw new Error(`Kode wilayah "${data.code}" sudah digunakan`);
-    }
-    return repository.create(data);
+    const existing = await repository.findAll();
+    const code = generateNextCode(
+      existing.map((r) => r.code).filter((c): c is string => !!c),
+      "WIL"
+    );
+    return repository.create({ ...data, code });
   },
 
+  /** Kode wilayah tidak bisa diubah setelah dibuat — field `code` pada input diabaikan bila ada. */
   async update(id: string, input: unknown): Promise<Region> {
-    const data: RegionInput = regionSchema.partial().parse(input) as RegionInput;
-    return repository.update(id, data);
+    const data = regionSchema.partial().parse(input) as Partial<RegionInput>;
+    delete data.code;
+    return repository.update(id, data as Partial<Region>);
   },
 
   async deactivate(id: string): Promise<void> {
