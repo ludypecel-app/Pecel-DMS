@@ -103,6 +103,18 @@ export async function GET(request: NextRequest) {
       return { totalStock, stockByProduct };
     }
 
+    // Total produk yang dikirim (picking_out) per Assignment, semua produk
+    // digabung — dipakai untuk kolom "Produk Dikirim" di riwayat kunjungan
+    // & total per sales di tabel Kinerja Sales. Beda dengan buildStockForOrders
+    // di atas: ini TIDAK dikurangi sales_out/returned dan TIDAK dibatasi ke
+    // assignment yang masih aktif — murni jumlah yang pernah dikirim.
+    const shippedByAssignment = new Map<string, number>();
+    stockTx
+      .filter((tx) => tx.type === "picking_out")
+      .forEach((tx) => {
+        shippedByAssignment.set(tx.assignment_id, (shippedByAssignment.get(tx.assignment_id) ?? 0) + tx.quantity);
+      });
+
     function buildRegionSummary(region: Region) {
       const regionOrders = orders.filter((o) => o.region_id === region.id);
       const totalOmzet = regionOrders.reduce((sum, o) => sum + (orderTotal.get(o.id) ?? 0), 0);
@@ -140,6 +152,7 @@ export async function GET(request: NextRequest) {
             const order = orderMap.get(a.order_id);
             return sum + (order ? orderTotal.get(order.id) ?? 0 : 0);
           }, 0);
+          const totalShipped = salesAssignments.reduce((sum, a) => sum + (shippedByAssignment.get(a.id) ?? 0), 0);
           return {
             salesId,
             salesName: sales?.name ?? salesId,
@@ -151,6 +164,7 @@ export async function GET(request: NextRequest) {
             completionRate: salesAssignments.length > 0 ? Math.round((completedAssignments / salesAssignments.length) * 100) : 0,
             totalVisits,
             totalOmzet,
+            totalShipped,
           };
         })
         .sort((a, b) => b.totalOmzet - a.totalOmzet);
@@ -178,6 +192,7 @@ export async function GET(request: NextRequest) {
             paymentStatus: payment?.status,
             paymentAmount: payment?.amount,
             notes: v.notes,
+            shippedQuantity: shippedByAssignment.get(v.assignment_id) ?? 0,
           };
         })
         .sort((a, b) => ((a.checkedInAt ?? "") < (b.checkedInAt ?? "") ? 1 : -1));

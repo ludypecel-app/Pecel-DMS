@@ -77,6 +77,7 @@ interface WarungVisitRow {
   paymentStatus?: string;
   paymentAmount?: number;
   notes?: string;
+  shippedQuantity: number;
 }
 
 /** Dipakai untuk tabel "Kinerja Sales" di detail Warung. */
@@ -91,6 +92,7 @@ interface SalesPerformanceRow {
   completionRate: number;
   totalVisits: number;
   totalOmzet: number;
+  totalShipped: number;
 }
 
 interface WarungDetail {
@@ -465,11 +467,12 @@ export default function ReportsPage() {
                         <th className="px-4 py-2.5 font-medium">Tingkat Selesai</th>
                         <th className="px-4 py-2.5 font-medium">Kunjungan</th>
                         <th className="px-4 py-2.5 font-medium">Total Nilai</th>
+                        <th className="px-4 py-2.5 font-medium">Produk Dikirim</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
                       {warungDetail.salesPerformance.length === 0 && (
-                        <tr><td colSpan={8} className="px-4 py-6 text-center text-ink-muted">Belum ada sales yang menangani pesanan warung ini.</td></tr>
+                        <tr><td colSpan={9} className="px-4 py-6 text-center text-ink-muted">Belum ada sales yang menangani pesanan warung ini.</td></tr>
                       )}
                       {warungDetail.salesPerformance.map((s) => (
                         <tr key={s.salesId}>
@@ -481,6 +484,7 @@ export default function ReportsPage() {
                           <td className="px-4 py-2">{s.completionRate}%</td>
                           <td className="px-4 py-2">{s.totalVisits}</td>
                           <td className="px-4 py-2">{formatPrice(s.totalOmzet)}</td>
+                          <td className="px-4 py-2">{s.totalShipped}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -499,12 +503,13 @@ export default function ReportsPage() {
                         <th className="px-4 py-2.5 font-medium">Check-In</th>
                         <th className="px-4 py-2.5 font-medium">Check-Out</th>
                         <th className="px-4 py-2.5 font-medium">Status</th>
+                        <th className="px-4 py-2.5 font-medium">Produk Dikirim</th>
                         <th className="px-4 py-2.5 font-medium">Pembayaran</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
                       {warungDetail.visitHistory.length === 0 && (
-                        <tr><td colSpan={6} className="px-4 py-6 text-center text-ink-muted">Belum ada riwayat kunjungan di warung ini.</td></tr>
+                        <tr><td colSpan={7} className="px-4 py-6 text-center text-ink-muted">Belum ada riwayat kunjungan di warung ini.</td></tr>
                       )}
                       {warungDetail.visitHistory.map((v) => (
                         <tr key={v.visitId}>
@@ -513,6 +518,7 @@ export default function ReportsPage() {
                           <td className="px-4 py-2">{formatDateTime(v.checkedInAt)}</td>
                           <td className="px-4 py-2">{formatDateTime(v.checkedOutAt)}</td>
                           <td className="px-4 py-2">{ORDER_STATUS_LABEL[v.status as keyof typeof ORDER_STATUS_LABEL] ?? v.status}</td>
+                          <td className="px-4 py-2">{v.shippedQuantity}</td>
                           <td className="px-4 py-2">
                             {v.paymentStatus
                               ? `${PAYMENT_STATUS_LABEL[v.paymentStatus] ?? v.paymentStatus}${v.paymentAmount ? ` · ${formatPrice(v.paymentAmount)}` : ""}`
