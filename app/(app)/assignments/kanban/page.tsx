@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, useCallback } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { AlertTriangle } from "lucide-react";
 import { useActiveRegions } from "@/features/regions/hooks/useActiveRegions";
 import { useActiveSales } from "@/features/sales/hooks/useActiveSales";
@@ -10,7 +11,7 @@ import { useActiveProducts } from "@/features/products/hooks/useActiveProducts";
 import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import { ORDER_STATUS_LABEL, ORDER_STATUS_COLOR } from "@/features/orders/constants";
 import { Modal } from "@/components/ui/Modal";
-import { TextField } from "@/components/forms/fields";
+import { TextField, SelectField } from "@/components/forms/fields";
 import type { OrderStatus } from "@/types/entities";
 import type { OrderWithDetails } from "@/features/orders/types/order.types";
 import type { AssignmentWithOrder } from "@/features/assignments/types/assignment.types";
@@ -35,6 +36,8 @@ interface CardData {
 }
 
 export default function AssignmentsKanbanPage() {
+  const { data: session } = useSession();
+  const role = session?.user?.role;
   const regions = useActiveRegions();
   const salesList = useActiveSales();
   const warungs = useActiveWarungs();
@@ -57,6 +60,19 @@ export default function AssignmentsKanbanPage() {
   const [cancelModal, setCancelModal] = useState<CardData | null>(null);
   const [cancelReason, setCancelReason] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  // Klik kartu (di luar tombol aksi) membuka modal detail pesanan + penugasan.
+  const [detailCard, setDetailCard] = useState<CardData | null>(null);
+
+  // Modal "Tugaskan Sales" — dipicu dari tombol aksi di kartu kolom Scheduling.
+  const [assignModalOrder, setAssignModalOrder] = useState<OrderWithDetails | null>(null);
+  const [assignForm, setAssignForm] = useState({ sales_id: "", picking_date: "", picking_time: "", delivery_date: "" });
+  const [assignErrors, setAssignErrors] = useState<Record<string, string>>({});
+  const [assignSubmitting, setAssignSubmitting] = useState(false);
+
+  // Modal "Tolak Penugasan" — aksi sales dari kartu kolom Assigned.
+  const [rejectModalId, setRejectModalId] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
 
   const fetchData = useCallback(async (opts?: { silent?: boolean }) => {
     if (!opts?.silent) setIsLoading(true);
@@ -135,6 +151,217 @@ export default function AssignmentsKanbanPage() {
     setTimeout(() => setBanner(""), 4000);
   }
 
+  function openAssignModal(order: OrderWithDetails) {
+    setAssignModalOrder(order);
+    setAssignForm({ sales_id: "", picking_date: "", picking_time: "", delivery_date: order.delivery_date });
+    setAssignErrors({});
+  }
+
+  async function handleAssign(e: React.FormEvent) {
+    e.preventDefault();
+    if (!assignModalOrder) return;
+    setAssignSubmitting(true);
+    setAssignErrors({});
+
+    const res = await fetch("/api/assignments", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ order_id: assignModalOrder.id, ...assignForm }),
+    });
+    const json = await res.json();
+
+    if (!res.ok) {
+      if (json.details) {
+        const flat: Record<string, string> = {};
+        Object.entries(json.details).forEach(([key, val]) => {
+          flat[key] = Array.isArray(val) ? (val[0] as string) : String(val);
+        });
+        setAssignErrors(flat);
+      } else {
+        setAssignErrors({ _form: json.error ?? "Gagal menugaskan sales" });
+      }
+      setAssignSubmitting(false);
+      return;
+    }
+
+    setAssignModalOrder(null);
+    setAssignSubmitting(false);
+    fetchData();
+  }
+
+  function openRejectModal(id: string) {
+    setRejectModalId(id);
+    setRejectReason("");
+  }
+
+  async function handleReject(e: React.FormEvent) {
+    e.preventDefault();
+    if (!rejectModalId) return;
+    const res = await fetch(`/api/assignments/${rejectModalId}/reject`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reason: rejectReason }),
+    });
+    const json = await res.json();
+    if (!res.ok) {
+      showBanner(json.error ?? "Gagal menolak penugasan");
+      return;
+    }
+    setRejectModalId(null);
+    setRejectReason("");
+    fetchData();
+  }
+
+  async function handleAccept(id: string) {
+    const res = await fetch(`/api/assignments/${id}/accept`, { method: "POST" });
+    const json = await res.json();
+    if (!res.ok) {
+      showBanner(json.error ?? "Gagal menerima penugasan");
+      return;
+    }
+    fetchData();
+  }
+
+  async function handleStartDelivery(id: string) {
+    const res = await fetch(`/api/assignments/${id}/start-delivery`, { method: "POST" });
+    const json = await res.json();
+    if (!res.ok) {
+      showBanner(json.error ?? "Gagal memulai pengiriman");
+      return;
+    }
+    fetchData();
+  }
+
+  /** Lihat catatan di assignments/page.tsx — sama persis: koordinat bersifat opsional (soft), tidak memblokir check-in. */
+  function getCurrentPosition(): Promise<{ latitude?: number; longitude?: number }> {
+    return new Promise((resolve) => {
+      if (typeof navigator === "undefined" || !navigator.geolocation) {
+        resolve({});
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (pos) => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
+        () => resolve({}),
+        { enableHighAccuracy: true, timeout: 8000 }
+      );
+    });
+  }
+
+  async function handleCheckIn(id: string) {
+    const { latitude, longitude } = await getCurrentPosition();
+    const res = await fetch(`/api/assignments/${id}/check-in`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ latitude, longitude }),
+    });
+    const json = await res.json();
+    if (!res.ok) {
+      showBanner(json.error ?? "Gagal check-in");
+      return;
+    }
+    fetchData();
+  }
+
+  /**
+   * Tombol aksi yang tampil di kartu Kanban — mengikuti aturan yang sama
+   * dengan kolom "Aksi" di halaman Penugasan (list view), supaya kartu
+   * Kanban tidak lagi cuma bisa di-drag tapi juga bisa langsung dieksekusi
+   * begitu ada aksi yang tersedia untuk status kartu tersebut.
+   */
+  function renderCardActions(card: CardData) {
+    const { order, assignment } = card;
+    const isSales = role === "sales";
+
+    if (!assignment) {
+      if (order.status === "scheduling" && !isSales) {
+        return (
+          <button
+            type="button"
+            onClick={() => openAssignModal(order)}
+            className="w-full rounded-md bg-forest-700 px-2 py-1.5 text-[11px] font-medium text-white hover:bg-forest-600"
+          >
+            Tugaskan Sales
+          </button>
+        );
+      }
+      return null;
+    }
+
+    if (assignment.status === "assigned") {
+      return isSales ? (
+        <div className="flex gap-2">
+          <button type="button" onClick={() => handleAccept(assignment.id)} className="flex-1 rounded-md bg-forest-700 px-2 py-1.5 text-[11px] font-medium text-white hover:bg-forest-600">
+            Terima
+          </button>
+          <button type="button" onClick={() => openRejectModal(assignment.id)} className="flex-1 rounded-md border border-danger/40 px-2 py-1.5 text-[11px] font-medium text-danger hover:bg-danger/10">
+            Tolak
+          </button>
+        </div>
+      ) : (
+        <p className="text-[11px] text-ink-muted">Menunggu sales</p>
+      );
+    }
+    if (assignment.status === "ready_to_picking") {
+      return !isSales ? (
+        <button type="button" onClick={() => openPickingModal(card)} className="w-full rounded-md bg-forest-700 px-2 py-1.5 text-[11px] font-medium text-white hover:bg-forest-600">
+          Konfirmasi Picking
+        </button>
+      ) : (
+        <p className="text-[11px] text-ink-muted">Menunggu admin</p>
+      );
+    }
+    if (assignment.status === "ready_to_delivery") {
+      return isSales ? (
+        <button type="button" onClick={() => handleStartDelivery(assignment.id)} className="w-full rounded-md bg-forest-700 px-2 py-1.5 text-[11px] font-medium text-white hover:bg-forest-600">
+          Mulai Kirim
+        </button>
+      ) : (
+        <p className="text-[11px] text-ink-muted">Menunggu sales</p>
+      );
+    }
+    if (assignment.status === "on_delivery") {
+      return isSales ? (
+        <button type="button" onClick={() => handleCheckIn(assignment.id)} className="w-full rounded-md bg-forest-700 px-2 py-1.5 text-[11px] font-medium text-white hover:bg-forest-600">
+          Check In (Sampai)
+        </button>
+      ) : (
+        <p className="text-[11px] text-ink-muted">Menunggu sales</p>
+      );
+    }
+    if (assignment.status === "arrived") {
+      return isSales ? (
+        <Link
+          href={`/assignments/${assignment.id}/visit`}
+          className="block w-full rounded-md bg-forest-700 px-2 py-1.5 text-center text-[11px] font-medium text-white hover:bg-forest-600"
+        >
+          Isi Data Kunjungan
+        </Link>
+      ) : (
+        <p className="text-[11px] text-ink-muted">Menunggu sales</p>
+      );
+    }
+    if (assignment.status === "visited" || assignment.status === "completed") {
+      return !isSales ? (
+        <Link
+          href={`/assignments/${assignment.id}/review`}
+          className="block w-full rounded-md border border-border px-2 py-1.5 text-center text-[11px] font-medium text-ink hover:bg-surface-page"
+        >
+          {assignment.status === "visited" ? "Review & Konfirmasi" : "Lihat Review"}
+        </Link>
+      ) : (
+        <p className="text-[11px] text-ink-muted">Menunggu admin</p>
+      );
+    }
+    return null;
+  }
+
+  function openPickingModal(card: CardData) {
+    const initialQty: Record<string, string> = {};
+    card.order.details.forEach((d) => (initialQty[d.product_id] = String(d.quantity)));
+    setPickingQty(initialQty);
+    setPickingModal(card);
+  }
+
   function handleDrop(targetStatus: OrderStatus) {
     if (!dragCard) return;
     const { order, assignment } = dragCard;
@@ -147,10 +374,7 @@ export default function AssignmentsKanbanPage() {
     // (2) status apa pun yang masih bisa dibatalkan -> Cancelled
     if (order.status === "ready_to_picking" && targetStatus === "ready_to_delivery") {
       if (!assignment) return;
-      const initialQty: Record<string, string> = {};
-      order.details.forEach((d) => (initialQty[d.product_id] = String(d.quantity)));
-      setPickingQty(initialQty);
-      setPickingModal(dragCard);
+      openPickingModal(dragCard);
       return;
     }
 
@@ -225,8 +449,8 @@ export default function AssignmentsKanbanPage() {
         <div>
           <h1 className="h1 !text-[20px]">Kanban Penugasan</h1>
           <p className="text-sm text-ink-muted">
-            Seret kartu untuk konfirmasi picking atau membatalkan — transisi lain dilakukan sales dari{" "}
-            <Link href="/assignments" className="underline">halaman Penugasan</Link>.
+            Klik kartu untuk lihat detail, gunakan tombol aksi di kartu bila tersedia, atau seret kartu untuk
+            konfirmasi picking/membatalkan.
           </p>
         </div>
       </div>
@@ -285,38 +509,51 @@ export default function AssignmentsKanbanPage() {
                   <span className="text-xs text-ink-muted">{items.length}</span>
                 </div>
                 <div className="flex-1 space-y-2 px-2 pb-2">
-                  {items.map((card) => (
-                    <div
-                      key={card.order.id}
-                      draggable
-                      onDragStart={() => setDragCard(card)}
-                      className="cursor-grab space-y-1.5 rounded-md border border-border bg-surface-raised p-2.5 text-xs shadow-sm active:cursor-grabbing"
-                    >
-                      <div className="flex items-center justify-between">
-                        <Link href={`/orders/${card.order.id}`} className="font-semibold text-forest-700 hover:underline">
-                          {card.order.order_number}
-                        </Link>
-                        {isLate(card.order) && (
-                          <span className="flex items-center gap-0.5 rounded-full bg-danger/15 px-1.5 py-0.5 text-[10px] font-medium text-danger">
-                            <AlertTriangle size={10} /> Telat
-                          </span>
+                  {items.map((card) => {
+                    const actions = renderCardActions(card);
+                    return (
+                      <div
+                        key={card.order.id}
+                        draggable
+                        onDragStart={() => setDragCard(card)}
+                        onClick={() => setDetailCard(card)}
+                        className="cursor-pointer space-y-1.5 rounded-md border border-border bg-surface-raised p-2.5 text-xs shadow-sm hover:border-forest-300 active:cursor-grabbing"
+                      >
+                        <div className="flex items-center justify-between">
+                          <Link
+                            href={`/orders/${card.order.id}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="font-semibold text-forest-700 hover:underline"
+                          >
+                            {card.order.order_number}
+                          </Link>
+                          {isLate(card.order) && (
+                            <span className="flex items-center gap-0.5 rounded-full bg-danger/15 px-1.5 py-0.5 text-[10px] font-medium text-danger">
+                              <AlertTriangle size={10} /> Telat
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-ink-muted">{warungName(card.order.warung_id)}</p>
+                        <p className="text-ink-muted">{regionName(card.order.region_id)}</p>
+                        {card.assignment && <p className="text-ink-muted">Sales: {salesName(card.assignment.sales_id)}</p>}
+                        <p className="text-ink-muted">Kirim: {card.order.delivery_date}</p>
+                        {card.assignment && (
+                          <p className="text-ink-muted">
+                            Picking: {card.assignment.picking_date} {card.assignment.picking_time}
+                          </p>
+                        )}
+                        <div className="flex items-center justify-between pt-1">
+                          <span className="text-ink-muted">{card.order.details.length} produk</span>
+                          <span className="font-medium text-ink">{formatPrice(card.order.total)}</span>
+                        </div>
+                        {actions && (
+                          <div className="pt-1.5" onClick={(e) => e.stopPropagation()} onDragStart={(e) => e.stopPropagation()}>
+                            {actions}
+                          </div>
                         )}
                       </div>
-                      <p className="text-ink-muted">{warungName(card.order.warung_id)}</p>
-                      <p className="text-ink-muted">{regionName(card.order.region_id)}</p>
-                      {card.assignment && <p className="text-ink-muted">Sales: {salesName(card.assignment.sales_id)}</p>}
-                      <p className="text-ink-muted">Kirim: {card.order.delivery_date}</p>
-                      {card.assignment && (
-                        <p className="text-ink-muted">
-                          Picking: {card.assignment.picking_date} {card.assignment.picking_time}
-                        </p>
-                      )}
-                      <div className="flex items-center justify-between pt-1">
-                        <span className="text-ink-muted">{card.order.details.length} produk</span>
-                        <span className="font-medium text-ink">{formatPrice(card.order.total)}</span>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                   {items.length === 0 && (
                     <p className="px-1 py-3 text-center text-[11px] text-ink-muted">Tidak ada</p>
                   )}
@@ -375,6 +612,119 @@ export default function AssignmentsKanbanPage() {
             </button>
           </div>
         </div>
+      </Modal>
+
+      <Modal title={`Tugaskan Sales — ${assignModalOrder?.order_number ?? ""}`} open={!!assignModalOrder} onClose={() => setAssignModalOrder(null)}>
+        <form onSubmit={handleAssign} className="space-y-3">
+          {assignErrors._form && <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{assignErrors._form}</p>}
+          <SelectField
+            label="Sales"
+            value={assignForm.sales_id}
+            onChange={(v) => setAssignForm((f) => ({ ...f, sales_id: v }))}
+            error={assignErrors.sales_id}
+            required
+            options={salesList.map((s) => ({ value: s.id, label: s.name }))}
+          />
+          <TextField label="Tanggal Picking" type="date" value={assignForm.picking_date} onChange={(v) => setAssignForm((f) => ({ ...f, picking_date: v }))} error={assignErrors.picking_date} required />
+          <TextField label="Waktu Picking" type="time" value={assignForm.picking_time} onChange={(v) => setAssignForm((f) => ({ ...f, picking_time: v }))} error={assignErrors.picking_time} required />
+          <TextField label="Tanggal Pengiriman" type="date" value={assignForm.delivery_date} onChange={(v) => setAssignForm((f) => ({ ...f, delivery_date: v }))} error={assignErrors.delivery_date} required />
+          <div className="flex justify-end gap-2 pt-2">
+            <button type="button" onClick={() => setAssignModalOrder(null)} className="rounded-md px-4 py-2 text-sm font-medium text-ink-muted hover:bg-surface-page">
+              Batal
+            </button>
+            <button type="submit" disabled={assignSubmitting} className="rounded-md bg-forest-700 px-4 py-2 text-sm font-medium text-white hover:bg-forest-600 disabled:opacity-50">
+              {assignSubmitting ? "Menugaskan..." : "Tugaskan"}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal title="Tolak Penugasan" open={!!rejectModalId} onClose={() => setRejectModalId(null)}>
+        <form onSubmit={handleReject} className="space-y-3">
+          <TextField label="Alasan Penolakan" value={rejectReason} onChange={setRejectReason} required />
+          <div className="flex justify-end gap-2 pt-2">
+            <button type="button" onClick={() => setRejectModalId(null)} className="rounded-md px-4 py-2 text-sm font-medium text-ink-muted hover:bg-surface-page">
+              Batal
+            </button>
+            <button type="submit" className="rounded-md bg-danger px-4 py-2 text-sm font-medium text-white hover:bg-danger/90">
+              Tolak Penugasan
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal title={`Detail — ${detailCard?.order.order_number ?? ""}`} open={!!detailCard} onClose={() => setDetailCard(null)} size="lg">
+        {detailCard && (
+          <div className="space-y-4">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="text-sm font-semibold text-ink">{warungName(detailCard.order.warung_id)}</p>
+                <p className="text-xs text-ink-muted">{regionName(detailCard.order.region_id)}</p>
+              </div>
+              <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${ORDER_STATUS_COLOR[detailCard.order.status]}`}>
+                {ORDER_STATUS_LABEL[detailCard.order.status]}
+              </span>
+            </div>
+
+            {detailCard.order.status === "cancelled" && detailCard.order.cancellation_reason && (
+              <div className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">
+                Dibatalkan: {detailCard.order.cancellation_reason}
+              </div>
+            )}
+
+            <div className="rounded-lg border border-border p-3">
+              <dl className="grid grid-cols-2 gap-y-1.5 text-sm">
+                <dt className="text-ink-muted">Tanggal Pesanan</dt>
+                <dd className="text-right">{detailCard.order.order_date}</dd>
+                <dt className="text-ink-muted">Tanggal Pengiriman</dt>
+                <dd className="text-right">{detailCard.order.delivery_date}</dd>
+                {detailCard.assignment && (
+                  <>
+                    <dt className="text-ink-muted">Sales</dt>
+                    <dd className="text-right">{salesName(detailCard.assignment.sales_id)}</dd>
+                    <dt className="text-ink-muted">Jadwal Picking</dt>
+                    <dd className="text-right">
+                      {detailCard.assignment.picking_date} {detailCard.assignment.picking_time}
+                    </dd>
+                  </>
+                )}
+              </dl>
+            </div>
+
+            <div className="rounded-lg border border-border p-3">
+              <h3 className="mb-2 text-sm font-medium text-ink">Detail Produk</h3>
+              <div className="divide-y divide-border">
+                {detailCard.order.details.map((d) => (
+                  <div key={d.id} className="flex items-center justify-between py-1.5 text-sm">
+                    <span>
+                      {products.find((p) => p.id === d.product_id)?.name ?? d.product_id} — {d.quantity} × {formatPrice(d.unit_price)}
+                    </span>
+                    <span className="font-medium">{formatPrice(d.subtotal)}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-2 flex justify-between border-t border-border pt-2 text-sm font-semibold">
+                <span>Total</span>
+                <span>{formatPrice(detailCard.order.total)}</span>
+              </div>
+            </div>
+
+            {renderCardActions(detailCard) && (
+              <div className="pt-1" onClick={() => setDetailCard(null)}>
+                {renderCardActions(detailCard)}
+              </div>
+            )}
+
+            <div className="flex justify-between border-t border-border pt-3">
+              <Link href={`/orders/${detailCard.order.id}`} className="text-sm font-medium text-forest-700 hover:underline">
+                Buka Halaman Detail Pesanan →
+              </Link>
+              <button type="button" onClick={() => setDetailCard(null)} className="rounded-md px-4 py-2 text-sm font-medium text-ink-muted hover:bg-surface-page">
+                Tutup
+              </button>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );
