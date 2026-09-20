@@ -5,6 +5,7 @@ import { Download, ChevronRight } from "lucide-react";
 import { useActiveSales } from "@/features/sales/hooks/useActiveSales";
 import { Button } from "@/components/ui/Button";
 import { WARUNG_PAYMENT_TERM_LABEL } from "@/features/warungs/constants";
+import { ORDER_STATUS_LABEL } from "@/features/orders/constants";
 import type { WarungPaymentTerm } from "@/types/entities";
 
 interface PaymentRow {
@@ -65,6 +66,19 @@ interface WarungStockRow {
   quantity: number;
 }
 
+/** Satu baris riwayat kunjungan (check-in/check-out) sales ke suatu warung. */
+interface WarungVisitRow {
+  visitId: string;
+  orderNumber: string;
+  salesName: string;
+  checkedInAt?: string;
+  checkedOutAt?: string;
+  status: string;
+  paymentStatus?: string;
+  paymentAmount?: number;
+  notes?: string;
+}
+
 /** Dipakai untuk tabel "Kinerja Sales" di detail Warung. */
 interface SalesPerformanceRow {
   salesId: string;
@@ -94,6 +108,7 @@ interface WarungDetail {
   totalStock: number;
   stockByProduct: WarungStockRow[];
   salesPerformance: SalesPerformanceRow[];
+  visitHistory: WarungVisitRow[];
 }
 
 interface SalesSummaryRow {
@@ -466,6 +481,43 @@ export default function ReportsPage() {
                           <td className="px-4 py-2">{s.completionRate}%</td>
                           <td className="px-4 py-2">{s.totalVisits}</td>
                           <td className="px-4 py-2">{formatPrice(s.totalOmzet)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div>
+                <h2 className="mb-2 text-sm font-semibold text-ink">Riwayat Kunjungan di {warungDetail.warungName}</h2>
+                <div className="overflow-x-auto rounded-lg border border-border bg-surface-raised">
+                  <table className="w-full text-left text-sm">
+                    <thead className="border-b border-border bg-surface-page text-ink-muted">
+                      <tr>
+                        <th className="px-4 py-2.5 font-medium">No. Pesanan</th>
+                        <th className="px-4 py-2.5 font-medium">Sales</th>
+                        <th className="px-4 py-2.5 font-medium">Check-In</th>
+                        <th className="px-4 py-2.5 font-medium">Check-Out</th>
+                        <th className="px-4 py-2.5 font-medium">Status</th>
+                        <th className="px-4 py-2.5 font-medium">Pembayaran</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {warungDetail.visitHistory.length === 0 && (
+                        <tr><td colSpan={6} className="px-4 py-6 text-center text-ink-muted">Belum ada riwayat kunjungan di warung ini.</td></tr>
+                      )}
+                      {warungDetail.visitHistory.map((v) => (
+                        <tr key={v.visitId}>
+                          <td className="px-4 py-2 font-medium text-ink">{v.orderNumber}</td>
+                          <td className="px-4 py-2">{v.salesName}</td>
+                          <td className="px-4 py-2">{formatDateTime(v.checkedInAt)}</td>
+                          <td className="px-4 py-2">{formatDateTime(v.checkedOutAt)}</td>
+                          <td className="px-4 py-2">{ORDER_STATUS_LABEL[v.status] ?? v.status}</td>
+                          <td className="px-4 py-2">
+                            {v.paymentStatus
+                              ? `${PAYMENT_STATUS_LABEL[v.paymentStatus] ?? v.paymentStatus}${v.paymentAmount ? ` · ${formatPrice(v.paymentAmount)}` : ""}`
+                              : "-"}
+                          </td>
                         </tr>
                       ))}
                     </tbody>

@@ -10,10 +10,11 @@ import {
   VISIT_TABLE,
   STOCK_TRANSACTION_TABLE,
   PRODUCT_TABLE,
+  PAYMENT_TABLE,
 } from "@/lib/google-sheets/tables";
 import { handleApiError } from "@/lib/utils/api-response";
 import { requireAdmin } from "@/lib/auth/session";
-import type { Region, Warung, Sales, Order, OrderDetail, Assignment, Visit, StockTransaction, Product } from "@/types/entities";
+import type { Region, Warung, Sales, Order, OrderDetail, Assignment, Visit, StockTransaction, Product, Payment } from "@/types/entities";
 
 const regionRepo = new SheetsRepository<Region>(REGION_TABLE);
 const warungRepo = new SheetsRepository<Warung>(WARUNG_TABLE);
@@ -23,6 +24,7 @@ const orderDetailRepo = new SheetsRepository<OrderDetail>(ORDER_DETAIL_TABLE);
 const assignmentRepo = new SheetsRepository<Assignment>(ASSIGNMENT_TABLE);
 const visitRepo = new SheetsRepository<Visit>(VISIT_TABLE);
 const stockTxRepo = new SheetsRepository<StockTransaction>(STOCK_TRANSACTION_TABLE);
+const paymentRepo = new SheetsRepository<Payment>(PAYMENT_TABLE);
 const productRepo = new SheetsRepository<Product>(PRODUCT_TABLE);
 
 const NOT_DONE = new Set(["completed", "cancelled"]);
@@ -44,7 +46,7 @@ export async function GET(request: NextRequest) {
     const regionId = searchParams.get("regionId");
     const warungId = searchParams.get("warungId");
 
-    const [regions, warungs, salesList, orders, orderDetails, assignments, visits, stockTx, products] = await Promise.all([
+    const [regions, warungs, salesList, orders, orderDetails, assignments, visits, stockTx, products, payments] = await Promise.all([
       regionRepo.findAll(),
       warungRepo.findAll(),
       salesRepo.findAll(),
@@ -54,7 +56,9 @@ export async function GET(request: NextRequest) {
       visitRepo.findAll(),
       stockTxRepo.findAll(),
       productRepo.findAll(),
+      paymentRepo.findAll(),
     ]);
+    const paymentByVisit = new Map(payments.map((p) => [p.visit_id, p]));
 
     const orderTotal = new Map<string, number>();
     orderDetails.forEach((d) => {
@@ -152,6 +156,33 @@ export async function GET(request: NextRequest) {
         .sort((a, b) => b.totalOmzet - a.totalOmzet);
     }
 
+    /**
+     * Riwayat kunjungan (check-in/check-out) untuk satu warung — semua
+     * kunjungan sepanjang waktu, bukan hanya yang aktif, diurutkan terbaru
+     * dulu, supaya admin bisa lihat histori sales yang datang ke warung ini.
+     */
+    function buildVisitHistoryForWarung(id: string) {
+      return visits
+        .filter((v) => v.warung_id === id && v.checked_in_at)
+        .map((v) => {
+          const assignment = assignments.find((a) => a.id === v.assignment_id);
+          const order = assignment ? orderMap.get(assignment.order_id) : undefined;
+          const payment = paymentByVisit.get(v.id);
+          return {
+            visitId: v.id,
+            orderNumber: order?.order_number ?? "-",
+            salesName: salesList.find((s) => s.id === v.sales_id)?.name ?? v.sales_id,
+            checkedInAt: v.checked_in_at,
+            checkedOutAt: v.checked_out_at,
+            status: assignment?.status ?? "-",
+            paymentStatus: payment?.status,
+            paymentAmount: payment?.amount,
+            notes: v.notes,
+          };
+        })
+        .sort((a, b) => ((a.checkedInAt ?? "") < (b.checkedInAt ?? "") ? 1 : -1));
+    }
+
     // --- Detail satu warung (paling spesifik, dicek duluan) ---
     if (warungId) {
       const warung = warungs.find((w) => w.id === warungId);
@@ -183,6 +214,7 @@ export async function GET(request: NextRequest) {
           totalStock,
           stockByProduct,
           salesPerformance: buildSalesPerformanceForOrders(warungOrderIds),
+          visitHistory: buildVisitHistoryForWarung(warungId),
         },
       });
     }
