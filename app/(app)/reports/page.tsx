@@ -512,7 +512,7 @@ export default function ReportsPage() {
                           <td className="px-4 py-2">{v.salesName}</td>
                           <td className="px-4 py-2">{formatDateTime(v.checkedInAt)}</td>
                           <td className="px-4 py-2">{formatDateTime(v.checkedOutAt)}</td>
-                          <td className="px-4 py-2">{ORDER_STATUS_LABEL[v.status] ?? v.status}</td>
+                          <td className="px-4 py-2">{ORDER_STATUS_LABEL[v.status as keyof typeof ORDER_STATUS_LABEL] ?? v.status}</td>
                           <td className="px-4 py-2">
                             {v.paymentStatus
                               ? `${PAYMENT_STATUS_LABEL[v.paymentStatus] ?? v.paymentStatus}${v.paymentAmount ? ` · ${formatPrice(v.paymentAmount)}` : ""}`
