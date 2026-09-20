@@ -115,6 +115,20 @@ export async function GET(request: NextRequest) {
         shippedByAssignment.set(tx.assignment_id, (shippedByAssignment.get(tx.assignment_id) ?? 0) + tx.quantity);
       });
 
+    // Sama seperti di atas, tapi untuk produk yang terjual ("sales_out",
+    // dicatat saat Check-Out) dan produk yang ditarik kembali ("returned",
+    // juga dicatat saat Check-Out) — dipakai untuk kolom "Produk Terjual" &
+    // "Produk Ditarik" di riwayat kunjungan.
+    const soldByAssignment = new Map<string, number>();
+    const returnedByAssignment = new Map<string, number>();
+    stockTx.forEach((tx) => {
+      if (tx.type === "sales_out") {
+        soldByAssignment.set(tx.assignment_id, (soldByAssignment.get(tx.assignment_id) ?? 0) + tx.quantity);
+      } else if (tx.type === "returned") {
+        returnedByAssignment.set(tx.assignment_id, (returnedByAssignment.get(tx.assignment_id) ?? 0) + tx.quantity);
+      }
+    });
+
     function buildRegionSummary(region: Region) {
       const regionOrders = orders.filter((o) => o.region_id === region.id);
       const totalOmzet = regionOrders.reduce((sum, o) => sum + (orderTotal.get(o.id) ?? 0), 0);
@@ -193,6 +207,8 @@ export async function GET(request: NextRequest) {
             paymentAmount: payment?.amount,
             notes: v.notes,
             shippedQuantity: shippedByAssignment.get(v.assignment_id) ?? 0,
+            soldQuantity: soldByAssignment.get(v.assignment_id) ?? 0,
+            returnedQuantity: returnedByAssignment.get(v.assignment_id) ?? 0,
           };
         })
         .sort((a, b) => ((a.checkedInAt ?? "") < (b.checkedInAt ?? "") ? 1 : -1));

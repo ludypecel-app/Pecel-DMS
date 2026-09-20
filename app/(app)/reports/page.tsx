@@ -78,6 +78,8 @@ interface WarungVisitRow {
   paymentAmount?: number;
   notes?: string;
   shippedQuantity: number;
+  soldQuantity: number;
+  returnedQuantity: number;
 }
 
 /** Dipakai untuk tabel "Kinerja Sales" di detail Warung. */
@@ -504,12 +506,14 @@ export default function ReportsPage() {
                         <th className="px-4 py-2.5 font-medium">Check-Out</th>
                         <th className="px-4 py-2.5 font-medium">Status</th>
                         <th className="px-4 py-2.5 font-medium">Produk Dikirim</th>
+                        <th className="px-4 py-2.5 font-medium">Produk Terjual</th>
+                        <th className="px-4 py-2.5 font-medium">Produk Ditarik</th>
                         <th className="px-4 py-2.5 font-medium">Pembayaran</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
                       {warungDetail.visitHistory.length === 0 && (
-                        <tr><td colSpan={7} className="px-4 py-6 text-center text-ink-muted">Belum ada riwayat kunjungan di warung ini.</td></tr>
+                        <tr><td colSpan={9} className="px-4 py-6 text-center text-ink-muted">Belum ada riwayat kunjungan di warung ini.</td></tr>
                       )}
                       {warungDetail.visitHistory.map((v) => (
                         <tr key={v.visitId}>
@@ -519,6 +523,8 @@ export default function ReportsPage() {
                           <td className="px-4 py-2">{formatDateTime(v.checkedOutAt)}</td>
                           <td className="px-4 py-2">{ORDER_STATUS_LABEL[v.status as keyof typeof ORDER_STATUS_LABEL] ?? v.status}</td>
                           <td className="px-4 py-2">{v.shippedQuantity}</td>
+                          <td className="px-4 py-2">{v.soldQuantity}</td>
+                          <td className="px-4 py-2">{v.returnedQuantity}</td>
                           <td className="px-4 py-2">
                             {v.paymentStatus
                               ? `${PAYMENT_STATUS_LABEL[v.paymentStatus] ?? v.paymentStatus}${v.paymentAmount ? ` · ${formatPrice(v.paymentAmount)}` : ""}`
