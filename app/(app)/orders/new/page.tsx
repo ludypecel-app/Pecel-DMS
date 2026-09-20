@@ -108,14 +108,14 @@ export default function NewOrderPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-4">
       <div>
-        <h1 className="text-lg font-semibold text-neutral-900">Buat Pesanan</h1>
-        <p className="text-sm text-neutral-500">
+        <h1 className="h1 !text-[20px]">Buat Pesanan</h1>
+        <p className="text-sm text-ink-muted">
           Pesanan dibuat tanpa memilih sales terlebih dahulu — penugasan dilakukan setelahnya.
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border border-neutral-200 bg-white p-4">
-        {formError && <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{formError}</p>}
+      <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border border-border bg-surface-raised p-4">
+        {formError && <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{formError}</p>}
 
         <SelectField
           label="Filter Wilayah (opsional, untuk mempersempit pilihan warung)"
@@ -135,7 +135,7 @@ export default function NewOrderPage() {
           options={warungs.map((w) => ({ value: w.id, label: w.name }))}
         />
         {selectedWarung && (
-          <p className="-mt-2 text-xs text-neutral-500">
+          <p className="-mt-2 text-xs text-ink-muted">
             Wilayah otomatis: <span className="font-medium">{regions.find((r) => r.id === selectedWarung.region_id)?.name ?? "-"}</span>
           </p>
         )}
@@ -150,14 +150,14 @@ export default function NewOrderPage() {
 
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-neutral-700">Produk Pesanan</span>
+            <span className="text-sm font-medium text-ink">Produk Pesanan</span>
             <button type="button" onClick={addItemRow} className="flex items-center gap-1 text-sm font-medium text-forest-700 hover:underline">
               <Plus size={14} /> Tambah Produk
             </button>
           </div>
 
           {rowsWithPrice.map((row, index) => (
-            <div key={index} className="flex items-end gap-2 rounded-md border border-neutral-200 p-2.5">
+            <div key={index} className="flex items-end gap-2 rounded-md border border-border p-2.5">
               <div className="flex-1">
                 <SelectField
                   label="Produk"
@@ -169,24 +169,24 @@ export default function NewOrderPage() {
               <div className="w-24">
                 <TextField label="Jumlah" type="number" value={row.quantity} onChange={(v) => updateItemRow(index, { quantity: v })} />
               </div>
-              <div className="w-28 pb-2 text-right text-sm text-neutral-600">{formatPrice(row.subtotal)}</div>
+              <div className="w-28 pb-2 text-right text-sm text-ink-muted">{formatPrice(row.subtotal)}</div>
               {items.length > 1 && (
-                <button type="button" onClick={() => removeItemRow(index)} className="mb-2 text-neutral-400 hover:text-red-600" aria-label="Hapus produk">
+                <button type="button" onClick={() => removeItemRow(index)} className="mb-2 text-ink-muted hover:text-danger" aria-label="Hapus produk">
                   <Trash2 size={16} />
                 </button>
               )}
             </div>
           ))}
-          {errors.items && <p className="text-xs text-red-600">{errors.items}</p>}
+          {errors.items && <p className="text-xs text-danger">{errors.items}</p>}
         </div>
 
-        <div className="flex items-center justify-between border-t border-neutral-200 pt-3">
-          <span className="text-sm font-medium text-neutral-700">Total Pesanan</span>
-          <span className="text-base font-semibold text-neutral-900">{formatPrice(total)}</span>
+        <div className="flex items-center justify-between border-t border-border pt-3">
+          <span className="text-sm font-medium text-ink">Total Pesanan</span>
+          <span className="text-base font-semibold text-ink">{formatPrice(total)}</span>
         </div>
 
         <div className="flex justify-end gap-2 pt-2">
-          <button type="button" onClick={() => router.push("/orders")} className="rounded-md px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100">
+          <button type="button" onClick={() => router.push("/orders")} className="rounded-md px-4 py-2 text-sm font-medium text-ink-muted hover:bg-surface-page">
             Batal
           </button>
           <button type="submit" disabled={submitting} className="rounded-md bg-forest-700 px-4 py-2 text-sm font-medium text-white hover:bg-forest-600 disabled:opacity-50">

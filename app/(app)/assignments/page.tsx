@@ -243,12 +243,12 @@ export default function AssignmentsPage() {
               <button type="button" onClick={() => handleAccept(a.id)} className="text-sm font-medium text-forest-700 hover:underline">
                 Terima
               </button>
-              <button type="button" onClick={() => setRejectModalId(a.id)} className="text-sm font-medium text-red-600 hover:underline">
+              <button type="button" onClick={() => setRejectModalId(a.id)} className="text-sm font-medium text-danger hover:underline">
                 Tolak
               </button>
             </div>
           ) : (
-            <span className="text-xs text-neutral-400">Menunggu sales</span>
+            <span className="text-xs text-ink-muted">Menunggu sales</span>
           );
         }
         if (a.status === "ready_to_picking") {
@@ -257,7 +257,7 @@ export default function AssignmentsPage() {
               Konfirmasi Picking
             </button>
           ) : (
-            <span className="text-xs text-neutral-400">Menunggu admin</span>
+            <span className="text-xs text-ink-muted">Menunggu admin</span>
           );
         }
         if (a.status === "ready_to_delivery") {
@@ -266,7 +266,7 @@ export default function AssignmentsPage() {
               Mulai Kirim
             </button>
           ) : (
-            <span className="text-xs text-neutral-400">Menunggu sales</span>
+            <span className="text-xs text-ink-muted">Menunggu sales</span>
           );
         }
         if (a.status === "on_delivery") {
@@ -275,7 +275,7 @@ export default function AssignmentsPage() {
               Check In (Sampai)
             </button>
           ) : (
-            <span className="text-xs text-neutral-400">Menunggu sales</span>
+            <span className="text-xs text-ink-muted">Menunggu sales</span>
           );
         }
         if (a.status === "arrived") {
@@ -284,7 +284,7 @@ export default function AssignmentsPage() {
               Isi Data Kunjungan
             </Link>
           ) : (
-            <span className="text-xs text-neutral-400">Menunggu sales</span>
+            <span className="text-xs text-ink-muted">Menunggu sales</span>
           );
         }
         if (a.status === "visited" || a.status === "completed") {
@@ -293,10 +293,10 @@ export default function AssignmentsPage() {
               {a.status === "visited" ? "Review & Konfirmasi" : "Lihat Review"}
             </Link>
           ) : (
-            <span className="text-xs text-neutral-400">Menunggu admin</span>
+            <span className="text-xs text-ink-muted">Menunggu admin</span>
           );
         }
-        return <span className="text-xs text-neutral-400">—</span>;
+        return <span className="text-xs text-ink-muted">—</span>;
       },
     },
   ];
@@ -305,26 +305,26 @@ export default function AssignmentsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-semibold text-neutral-900">Penugasan</h1>
-          <p className="text-sm text-neutral-500">
+          <h1 className="h1 !text-[20px]">Penugasan</h1>
+          <p className="text-sm text-ink-muted">
             {role === "sales" ? "Penugasan yang diberikan kepada Anda" : "Tugaskan sales ke pesanan, dan pantau status penerimaan tugas"}
           </p>
         </div>
         {role === "admin" && (
           <Link
             href="/assignments/kanban"
-            className="flex items-center gap-1.5 rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-100"
+            className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm font-medium text-ink hover:bg-surface-page"
           >
             <LayoutGrid size={15} /> Lihat Kanban
           </Link>
         )}
       </div>
 
-      {actionError && <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{actionError}</p>}
+      {actionError && <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{actionError}</p>}
 
       {role === "admin" && (
         <section className="space-y-2">
-          <h2 className="text-sm font-semibold text-neutral-700">Pesanan Menunggu Penugasan (Scheduling)</h2>
+          <h2 className="text-sm font-semibold text-ink">Pesanan Menunggu Penugasan (Scheduling)</h2>
           <DataTable
             columns={schedulingColumns}
             data={schedulingOrders}
@@ -336,7 +336,7 @@ export default function AssignmentsPage() {
       )}
 
       <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-neutral-700">{role === "sales" ? "Tugas Saya" : "Semua Penugasan"}</h2>
+        <h2 className="text-sm font-semibold text-ink">{role === "sales" ? "Tugas Saya" : "Semua Penugasan"}</h2>
         <DataTable
           columns={assignmentColumns}
           data={assignments}
@@ -348,7 +348,7 @@ export default function AssignmentsPage() {
 
       <Modal title={`Tugaskan Sales — ${assignModalOrder?.order_number ?? ""}`} open={!!assignModalOrder} onClose={() => setAssignModalOrder(null)}>
         <form onSubmit={handleAssign} className="space-y-3">
-          {errors._form && <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{errors._form}</p>}
+          {errors._form && <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{errors._form}</p>}
           <SelectField
             label="Sales"
             value={form.sales_id}
@@ -360,7 +360,7 @@ export default function AssignmentsPage() {
           <TextField label="Waktu Picking" type="text" value={form.picking_time} onChange={(v) => setForm((f) => ({ ...f, picking_time: v }))} error={errors.picking_time} placeholder="mis. 08:00" />
           <TextField label="Tanggal Pengiriman" type="date" value={form.delivery_date} onChange={(v) => setForm((f) => ({ ...f, delivery_date: v }))} error={errors.delivery_date} />
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={() => setAssignModalOrder(null)} className="rounded-md px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100">
+            <button type="button" onClick={() => setAssignModalOrder(null)} className="rounded-md px-4 py-2 text-sm font-medium text-ink-muted hover:bg-surface-page">
               Batal
             </button>
             <button type="submit" disabled={submitting} className="rounded-md bg-forest-700 px-4 py-2 text-sm font-medium text-white hover:bg-forest-600 disabled:opacity-50">
@@ -373,20 +373,20 @@ export default function AssignmentsPage() {
       <Modal title="Tolak Penugasan" open={!!rejectModalId} onClose={() => setRejectModalId(null)}>
         <form onSubmit={handleReject} className="space-y-3">
           <label className="block space-y-1 text-sm">
-            <span className="font-medium text-neutral-700">Alasan Penolakan</span>
+            <span className="font-medium text-ink">Alasan Penolakan</span>
             <textarea
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
               rows={3}
               required
-              className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-forest-600 focus:ring-1 focus:ring-forest-600"
+              className="w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-forest-600 focus:ring-1 focus:ring-forest-600"
             />
           </label>
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={() => setRejectModalId(null)} className="rounded-md px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100">
+            <button type="button" onClick={() => setRejectModalId(null)} className="rounded-md px-4 py-2 text-sm font-medium text-ink-muted hover:bg-surface-page">
               Batal
             </button>
-            <button type="submit" className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-500">
+            <button type="submit" className="rounded-md bg-danger px-4 py-2 text-sm font-medium text-white hover:bg-danger/90">
               Tolak Penugasan
             </button>
           </div>
@@ -399,25 +399,25 @@ export default function AssignmentsPage() {
         onClose={() => setPickingModal(null)}
       >
         <div className="space-y-3">
-          <p className="text-xs text-neutral-500">
+          <p className="text-xs text-ink-muted">
             Periksa jumlah aktual yang diserahkan ke sales. Selisih dari jumlah pesanan diperbolehkan (partial fulfillment).
           </p>
           {pickingModal?.order?.details.map((d) => (
             <div key={d.id} className="flex items-center justify-between gap-2">
-              <span className="text-sm text-neutral-700">
+              <span className="text-sm text-ink">
                 {products.find((p) => p.id === d.product_id)?.name ?? d.product_id} (pesan: {d.quantity})
               </span>
               <input
                 type="number"
                 value={pickingQty[d.product_id] ?? ""}
                 onChange={(e) => setPickingQty((prev) => ({ ...prev, [d.product_id]: e.target.value }))}
-                className="w-24 rounded-md border border-neutral-300 px-2 py-1 text-sm"
+                className="w-24 rounded-md border border-border px-2 py-1 text-sm"
               />
             </div>
           ))}
-          {actionError && <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{actionError}</p>}
+          {actionError && <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{actionError}</p>}
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={() => setPickingModal(null)} className="rounded-md px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100">
+            <button type="button" onClick={() => setPickingModal(null)} className="rounded-md px-4 py-2 text-sm font-medium text-ink-muted hover:bg-surface-page">
               Batal
             </button>
             <button

@@ -142,14 +142,14 @@ export default function RegionsPage() {
           <button
             type="button"
             onClick={() => handleToggleStatus(r)}
-            className="text-sm font-medium text-neutral-500 hover:underline"
+            className="text-sm font-medium text-ink-muted hover:underline"
           >
             {r.status === "active" ? "Nonaktifkan" : "Aktifkan"}
           </button>
           <button
             type="button"
             onClick={() => openDeleteModal(r)}
-            className="text-sm font-medium text-red-600 hover:underline"
+            className="text-sm font-medium text-danger hover:underline"
           >
             Hapus
           </button>
@@ -162,8 +162,8 @@ export default function RegionsPage() {
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-lg font-semibold text-neutral-900">Wilayah</h1>
-          <p className="text-sm text-neutral-500">Kelola data wilayah distribusi</p>
+          <h1 className="h1 !text-[20px]">Wilayah</h1>
+          <p className="text-sm text-ink-muted">Kelola data wilayah distribusi</p>
         </div>
         <button
           type="button"
@@ -177,18 +177,18 @@ export default function RegionsPage() {
 
       <div className="flex flex-col gap-2 sm:flex-row">
         <div className="relative flex-1">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Cari kode atau nama wilayah..."
-            className="w-full rounded-md border border-neutral-300 py-2 pl-9 pr-3 text-sm outline-none focus:border-forest-600 focus:ring-1 focus:ring-forest-600"
+            className="w-full rounded-md border border-border py-2 pl-9 pr-3 text-sm outline-none focus:border-forest-600 focus:ring-1 focus:ring-forest-600"
           />
         </div>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-          className="rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm outline-none focus:border-forest-600 focus:ring-1 focus:ring-forest-600"
+          className="rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-forest-600 focus:ring-1 focus:ring-forest-600"
         >
           <option value="">Semua Status</option>
           <option value="active">Aktif</option>
@@ -211,7 +211,7 @@ export default function RegionsPage() {
       >
         <form onSubmit={handleSubmit} className="space-y-3">
           {errors._form && (
-            <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{errors._form}</p>
+            <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{errors._form}</p>
           )}
           <TextField
             label="Kode Wilayah"
@@ -231,7 +231,7 @@ export default function RegionsPage() {
             <button
               type="button"
               onClick={() => setModalOpen(false)}
-              className="rounded-md px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100"
+              className="rounded-md px-4 py-2 text-sm font-medium text-ink-muted hover:bg-surface-page"
             >
               Batal
             </button>

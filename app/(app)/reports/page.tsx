@@ -104,41 +104,41 @@ export default function ReportsPage() {
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-lg font-semibold text-neutral-900">Laporan</h1>
-          <p className="text-sm text-neutral-500">Laporan pembayaran & monitoring kunjungan sales</p>
+          <h1 className="h1 !text-[20px]">Laporan</h1>
+          <p className="text-sm text-ink-muted">Laporan pembayaran & monitoring kunjungan sales</p>
         </div>
         <button
           type="button"
           onClick={handleExport}
-          className="flex items-center gap-1.5 rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-100"
+          className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm font-medium text-ink hover:bg-surface-page"
         >
           <Download size={15} /> Export CSV
         </button>
       </div>
 
-      <div className="flex gap-1 border-b border-neutral-200">
+      <div className="flex gap-1 border-b border-border">
         <button
           type="button"
           onClick={() => setTab("payments")}
-          className={`px-3 py-2 text-sm font-medium ${tab === "payments" ? "border-b-2 border-forest-700 text-forest-700" : "text-neutral-500"}`}
+          className={`px-3 py-2 text-sm font-medium ${tab === "payments" ? "border-b-2 border-forest-700 text-forest-700" : "text-ink-muted"}`}
         >
           Laporan Pembayaran
         </button>
         <button
           type="button"
           onClick={() => setTab("visits")}
-          className={`px-3 py-2 text-sm font-medium ${tab === "visits" ? "border-b-2 border-forest-700 text-forest-700" : "text-neutral-500"}`}
+          className={`px-3 py-2 text-sm font-medium ${tab === "visits" ? "border-b-2 border-forest-700 text-forest-700" : "text-ink-muted"}`}
         >
           Monitoring Kunjungan
         </button>
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="rounded-md border border-neutral-300 px-3 py-2 text-sm" />
-        <span className="self-center text-sm text-neutral-400">s/d</span>
-        <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="rounded-md border border-neutral-300 px-3 py-2 text-sm" />
+        <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="rounded-md border border-border px-3 py-2 text-sm" />
+        <span className="self-center text-sm text-ink-muted">s/d</span>
+        <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="rounded-md border border-border px-3 py-2 text-sm" />
         {tab === "visits" && (
-          <select value={salesFilter} onChange={(e) => setSalesFilter(e.target.value)} className="rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm">
+          <select value={salesFilter} onChange={(e) => setSalesFilter(e.target.value)} className="rounded-md border border-border bg-white px-3 py-2 text-sm">
             <option value="">Semua Sales</option>
             {salesList.map((s) => (
               <option key={s.id} value={s.id}>{s.name}</option>
@@ -148,16 +148,16 @@ export default function ReportsPage() {
       </div>
 
       {isLoading ? (
-        <p className="text-sm text-neutral-500">Memuat...</p>
+        <p className="text-sm text-ink-muted">Memuat...</p>
       ) : tab === "payments" ? (
         <div className="space-y-2">
-          <div className="rounded-lg border border-neutral-200 bg-white p-3">
-            <p className="text-xs text-neutral-500">Total periode ini</p>
+          <div className="rounded-lg border border-border bg-surface-raised p-3">
+            <p className="text-xs text-ink-muted">Total periode ini</p>
             <p className="text-lg font-semibold text-forest-700">{formatPrice(totalAmount)}</p>
           </div>
-          <div className="overflow-x-auto rounded-lg border border-neutral-200 bg-white">
+          <div className="overflow-x-auto rounded-lg border border-border bg-surface-raised">
             <table className="w-full text-left text-sm">
-              <thead className="border-b border-neutral-200 bg-neutral-50 text-neutral-600">
+              <thead className="border-b border-border bg-surface-page text-ink-muted">
                 <tr>
                   <th className="px-4 py-2.5 font-medium">Tanggal</th>
                   <th className="px-4 py-2.5 font-medium">No. Pesanan</th>
@@ -167,9 +167,9 @@ export default function ReportsPage() {
                   <th className="px-4 py-2.5 font-medium">Metode</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-neutral-100">
+              <tbody className="divide-y divide-border">
                 {payments.length === 0 && (
-                  <tr><td colSpan={6} className="px-4 py-6 text-center text-neutral-400">Tidak ada data pada periode ini.</td></tr>
+                  <tr><td colSpan={6} className="px-4 py-6 text-center text-ink-muted">Tidak ada data pada periode ini.</td></tr>
                 )}
                 {payments.map((p) => (
                   <tr key={p.paymentId}>
@@ -186,9 +186,9 @@ export default function ReportsPage() {
           </div>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-neutral-200 bg-white">
+        <div className="overflow-x-auto rounded-lg border border-border bg-surface-raised">
           <table className="w-full text-left text-sm">
-            <thead className="border-b border-neutral-200 bg-neutral-50 text-neutral-600">
+            <thead className="border-b border-border bg-surface-page text-ink-muted">
               <tr>
                 <th className="px-4 py-2.5 font-medium">No. Pesanan</th>
                 <th className="px-4 py-2.5 font-medium">Sales</th>
@@ -198,9 +198,9 @@ export default function ReportsPage() {
                 <th className="px-4 py-2.5 font-medium">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-100">
+            <tbody className="divide-y divide-border">
               {visits.length === 0 && (
-                <tr><td colSpan={6} className="px-4 py-6 text-center text-neutral-400">Tidak ada data pada periode ini.</td></tr>
+                <tr><td colSpan={6} className="px-4 py-6 text-center text-ink-muted">Tidak ada data pada periode ini.</td></tr>
               )}
               {visits.map((v) => (
                 <tr key={v.visitId}>

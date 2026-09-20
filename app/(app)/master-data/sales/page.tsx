@@ -150,10 +150,10 @@ export default function SalesPage() {
           <button type="button" onClick={() => openEditModal(s)} className="text-sm font-medium text-forest-700 hover:underline">
             Edit
           </button>
-          <button type="button" onClick={() => handleToggleStatus(s)} className="text-sm font-medium text-neutral-500 hover:underline">
+          <button type="button" onClick={() => handleToggleStatus(s)} className="text-sm font-medium text-ink-muted hover:underline">
             {s.status === "active" ? "Nonaktifkan" : "Aktifkan"}
           </button>
-          <button type="button" onClick={() => openDeleteModal(s)} className="text-sm font-medium text-red-600 hover:underline">
+          <button type="button" onClick={() => openDeleteModal(s)} className="text-sm font-medium text-danger hover:underline">
             Hapus
           </button>
         </div>
@@ -165,8 +165,8 @@ export default function SalesPage() {
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-lg font-semibold text-neutral-900">Sales</h1>
-          <p className="text-sm text-neutral-500">Kelola data tenaga pemasaran</p>
+          <h1 className="h1 !text-[20px]">Sales</h1>
+          <p className="text-sm text-ink-muted">Kelola data tenaga pemasaran</p>
         </div>
         <button type="button" onClick={openCreateModal} className="flex items-center justify-center gap-1.5 rounded-md bg-forest-700 px-4 py-2 text-sm font-medium text-white hover:bg-forest-600">
           <Plus size={16} />
@@ -176,21 +176,21 @@ export default function SalesPage() {
 
       <div className="flex flex-col gap-2 sm:flex-row">
         <div className="relative flex-1">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Cari nama atau telepon..."
-            className="w-full rounded-md border border-neutral-300 py-2 pl-9 pr-3 text-sm outline-none focus:border-forest-600 focus:ring-1 focus:ring-forest-600"
+            className="w-full rounded-md border border-border py-2 pl-9 pr-3 text-sm outline-none focus:border-forest-600 focus:ring-1 focus:ring-forest-600"
           />
         </div>
-        <select value={regionFilter} onChange={(e) => setRegionFilter(e.target.value)} className="rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm outline-none focus:border-forest-600 focus:ring-1 focus:ring-forest-600">
+        <select value={regionFilter} onChange={(e) => setRegionFilter(e.target.value)} className="rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-forest-600 focus:ring-1 focus:ring-forest-600">
           <option value="">Semua Wilayah</option>
           {regions.map((r) => (
             <option key={r.id} value={r.id}>{r.name}</option>
           ))}
         </select>
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as StatusFilter)} className="rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm outline-none focus:border-forest-600 focus:ring-1 focus:ring-forest-600">
+        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as StatusFilter)} className="rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-forest-600 focus:ring-1 focus:ring-forest-600">
           <option value="">Semua Status</option>
           <option value="active">Aktif</option>
           <option value="inactive">Nonaktif</option>
@@ -201,7 +201,7 @@ export default function SalesPage() {
 
       <Modal title={editing ? "Edit Sales" : "Tambah Sales"} open={modalOpen} onClose={() => setModalOpen(false)}>
         <form onSubmit={handleSubmit} className="space-y-3">
-          {errors._form && <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{errors._form}</p>}
+          {errors._form && <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{errors._form}</p>}
           <TextField label="Nama Sales" value={form.name} onChange={(v) => setForm((f) => ({ ...f, name: v }))} error={errors.name} placeholder="mis. Budi Santoso" />
           <TextField label="Nomor Telepon" type="tel" value={form.phone} onChange={(v) => setForm((f) => ({ ...f, phone: v }))} error={errors.phone} placeholder="mis. 081234567890" />
           <SelectField
@@ -213,7 +213,7 @@ export default function SalesPage() {
           />
           <TextField label="ID User (opsional)" value={form.user_id} onChange={(v) => setForm((f) => ({ ...f, user_id: v }))} error={errors.user_id} placeholder="Biasanya tidak perlu diisi manual" />
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={() => setModalOpen(false)} className="rounded-md px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100">
+            <button type="button" onClick={() => setModalOpen(false)} className="rounded-md px-4 py-2 text-sm font-medium text-ink-muted hover:bg-surface-page">
               Batal
             </button>
             <button type="submit" disabled={submitting} className="rounded-md bg-forest-700 px-4 py-2 text-sm font-medium text-white hover:bg-forest-600 disabled:opacity-50">

@@ -10,22 +10,24 @@ interface StatCardProps {
 
 export function StatCard({ label, value, icon: Icon, tone = "default" }: StatCardProps) {
   return (
-    <div className="rounded-lg border border-neutral-200 bg-white p-4">
+    <div className="rounded-lg border border-border bg-surface-raised p-4">
       <div className="flex items-center justify-between">
-        <p className="text-xs text-neutral-500">{label}</p>
-        <Icon
-          size={16}
+        <p className="body-sm text-ink-muted">{label}</p>
+        <div
           className={clsx(
-            tone === "danger" && "text-red-500",
-            tone === "warning" && "text-turmeric-600",
-            tone === "default" && "text-forest-600"
+            "flex h-7 w-7 items-center justify-center rounded-md",
+            tone === "danger" && "bg-danger/10 text-danger",
+            tone === "warning" && "bg-warning/15 text-warning",
+            tone === "default" && "bg-accent/10 text-accent"
           )}
-        />
+        >
+          <Icon size={15} />
+        </div>
       </div>
       <p
         className={clsx(
-          "mt-1 text-2xl font-semibold",
-          tone === "danger" ? "text-red-600" : tone === "warning" ? "text-turmeric-700" : "text-neutral-900"
+          "mt-2 text-[22px] font-semibold leading-7",
+          tone === "danger" ? "text-danger" : tone === "warning" ? "text-warning" : "text-ink"
         )}
       >
         {value}

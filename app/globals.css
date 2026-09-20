@@ -12,6 +12,16 @@
 
 /* Fokus keyboard tetap terlihat jelas untuk aksesibilitas */
 :focus-visible {
-  outline: 2px solid theme("colors.forest.600");
+  outline: 2px solid theme("colors.accent");
   outline-offset: 2px;
 }
+
+/* Skala tipografi Pulsar — dipakai untuk judul halaman & label penting */
+.h1 { font-family: var(--font-display); font-size: 26px; line-height: 32px; font-weight: 600; margin: 0; }
+.h2 { font-family: var(--font-display); font-size: 20px; line-height: 26px; font-weight: 600; margin: 0; }
+.h3 { font-family: var(--font-display); font-size: 17px; line-height: 22px; font-weight: 600; margin: 0; }
+.body { font-family: var(--font-sans); font-size: 15px; line-height: 24px; font-weight: 400; margin: 0; }
+.body-sm { font-family: var(--font-sans); font-size: 13px; line-height: 20px; font-weight: 400; margin: 0; }
+.label { font-family: var(--font-sans); font-size: 13px; line-height: 16px; font-weight: 600; letter-spacing: 0.02em; margin: 0; }
+.caption { font-family: var(--font-sans); font-size: 12px; line-height: 16px; font-weight: 500; margin: 0; }
+.code { font-family: var(--font-mono); font-size: 13px; line-height: 21px; font-weight: 500; margin: 0; }

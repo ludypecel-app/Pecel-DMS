@@ -145,10 +145,10 @@ export default function UsersPage() {
           <button type="button" onClick={() => openEditModal(u)} className="text-sm font-medium text-forest-700 hover:underline">
             Edit
           </button>
-          <button type="button" onClick={() => handleToggleStatus(u)} className="text-sm font-medium text-neutral-500 hover:underline">
+          <button type="button" onClick={() => handleToggleStatus(u)} className="text-sm font-medium text-ink-muted hover:underline">
             {u.status === "active" ? "Nonaktifkan" : "Aktifkan"}
           </button>
-          <button type="button" onClick={() => openDeleteModal(u)} className="text-sm font-medium text-red-600 hover:underline">
+          <button type="button" onClick={() => openDeleteModal(u)} className="text-sm font-medium text-danger hover:underline">
             Hapus
           </button>
         </div>
@@ -160,8 +160,8 @@ export default function UsersPage() {
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-lg font-semibold text-neutral-900">Pengguna</h1>
-          <p className="text-sm text-neutral-500">Kelola akun login admin & sales</p>
+          <h1 className="h1 !text-[20px]">Pengguna</h1>
+          <p className="text-sm text-ink-muted">Kelola akun login admin & sales</p>
         </div>
         <button type="button" onClick={openCreateModal} className="flex items-center justify-center gap-1.5 rounded-md bg-forest-700 px-4 py-2 text-sm font-medium text-white hover:bg-forest-600">
           <Plus size={16} />
@@ -173,7 +173,7 @@ export default function UsersPage() {
 
       <Modal title={editing ? "Edit User" : "Tambah User"} open={modalOpen} onClose={() => setModalOpen(false)}>
         <form onSubmit={handleSubmit} className="space-y-3">
-          {errors._form && <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{errors._form}</p>}
+          {errors._form && <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{errors._form}</p>}
           <TextField label="Nama" value={form.name} onChange={(v) => setForm((f) => ({ ...f, name: v }))} error={errors.name} />
           <TextField label="Email" type="text" value={form.email} onChange={(v) => setForm((f) => ({ ...f, email: v }))} error={errors.email} />
           <TextField
@@ -204,7 +204,7 @@ export default function UsersPage() {
             />
           )}
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={() => setModalOpen(false)} className="rounded-md px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100">
+            <button type="button" onClick={() => setModalOpen(false)} className="rounded-md px-4 py-2 text-sm font-medium text-ink-muted hover:bg-surface-page">
               Batal
             </button>
             <button type="submit" disabled={submitting} className="rounded-md bg-forest-700 px-4 py-2 text-sm font-medium text-white hover:bg-forest-600 disabled:opacity-50">

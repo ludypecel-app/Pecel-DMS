@@ -214,8 +214,8 @@ export default function AssignmentsKanbanPage() {
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-lg font-semibold text-neutral-900">Kanban Penugasan</h1>
-          <p className="text-sm text-neutral-500">
+          <h1 className="h1 !text-[20px]">Kanban Penugasan</h1>
+          <p className="text-sm text-ink-muted">
             Seret kartu untuk konfirmasi picking atau membatalkan — transisi lain dilakukan sales dari{" "}
             <Link href="/assignments" className="underline">halaman Penugasan</Link>.
           </p>
@@ -223,7 +223,7 @@ export default function AssignmentsKanbanPage() {
       </div>
 
       {banner && (
-        <div className="flex items-center gap-2 rounded-md bg-turmeric-50 px-3 py-2 text-sm text-neutral-700">
+        <div className="flex items-center gap-2 rounded-md bg-turmeric-50 px-3 py-2 text-sm text-ink">
           <AlertTriangle size={15} className="shrink-0 text-turmeric-600" />
           {banner}
         </div>
@@ -234,21 +234,21 @@ export default function AssignmentsKanbanPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Cari no. pesanan / nama warung..."
-          className="w-56 rounded-md border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-forest-600 focus:ring-1 focus:ring-forest-600"
+          className="w-56 rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-forest-600 focus:ring-1 focus:ring-forest-600"
         />
         <input
           type="date"
           value={dateFilter}
           onChange={(e) => setDateFilter(e.target.value)}
-          className="rounded-md border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-forest-600 focus:ring-1 focus:ring-forest-600"
+          className="rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-forest-600 focus:ring-1 focus:ring-forest-600"
         />
-        <select value={regionFilter} onChange={(e) => setRegionFilter(e.target.value)} className="rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm">
+        <select value={regionFilter} onChange={(e) => setRegionFilter(e.target.value)} className="rounded-md border border-border bg-white px-3 py-2 text-sm">
           <option value="">Semua Wilayah</option>
           {regions.map((r) => (
             <option key={r.id} value={r.id}>{r.name}</option>
           ))}
         </select>
-        <select value={salesFilter} onChange={(e) => setSalesFilter(e.target.value)} className="rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm">
+        <select value={salesFilter} onChange={(e) => setSalesFilter(e.target.value)} className="rounded-md border border-border bg-white px-3 py-2 text-sm">
           <option value="">Semua Sales</option>
           {salesList.map((s) => (
             <option key={s.id} value={s.id}>{s.name}</option>
@@ -257,7 +257,7 @@ export default function AssignmentsKanbanPage() {
       </div>
 
       {isLoading ? (
-        <p className="text-sm text-neutral-500">Memuat...</p>
+        <p className="text-sm text-ink-muted">Memuat...</p>
       ) : (
         <div className="flex gap-3 overflow-x-auto pb-3">
           {KANBAN_COLUMNS.map((status) => {
@@ -267,13 +267,13 @@ export default function AssignmentsKanbanPage() {
                 key={status}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={() => handleDrop(status)}
-                className="flex w-64 shrink-0 flex-col rounded-lg bg-neutral-100"
+                className="flex w-64 shrink-0 flex-col rounded-lg bg-surface-page"
               >
                 <div className="flex items-center justify-between px-3 py-2">
-                  <span className="text-xs font-semibold uppercase tracking-wide text-neutral-600">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
                     {ORDER_STATUS_LABEL[status]}
                   </span>
-                  <span className="text-xs text-neutral-400">{items.length}</span>
+                  <span className="text-xs text-ink-muted">{items.length}</span>
                 </div>
                 <div className="flex-1 space-y-2 px-2 pb-2">
                   {items.map((card) => (
@@ -281,35 +281,35 @@ export default function AssignmentsKanbanPage() {
                       key={card.order.id}
                       draggable
                       onDragStart={() => setDragCard(card)}
-                      className="cursor-grab space-y-1.5 rounded-md border border-neutral-200 bg-white p-2.5 text-xs shadow-sm active:cursor-grabbing"
+                      className="cursor-grab space-y-1.5 rounded-md border border-border bg-surface-raised p-2.5 text-xs shadow-sm active:cursor-grabbing"
                     >
                       <div className="flex items-center justify-between">
                         <Link href={`/orders/${card.order.id}`} className="font-semibold text-forest-700 hover:underline">
                           {card.order.order_number}
                         </Link>
                         {isLate(card.order) && (
-                          <span className="flex items-center gap-0.5 rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-medium text-red-700">
+                          <span className="flex items-center gap-0.5 rounded-full bg-danger/15 px-1.5 py-0.5 text-[10px] font-medium text-danger">
                             <AlertTriangle size={10} /> Telat
                           </span>
                         )}
                       </div>
-                      <p className="text-neutral-600">{warungName(card.order.warung_id)}</p>
-                      <p className="text-neutral-400">{regionName(card.order.region_id)}</p>
-                      {card.assignment && <p className="text-neutral-500">Sales: {salesName(card.assignment.sales_id)}</p>}
-                      <p className="text-neutral-500">Kirim: {card.order.delivery_date}</p>
+                      <p className="text-ink-muted">{warungName(card.order.warung_id)}</p>
+                      <p className="text-ink-muted">{regionName(card.order.region_id)}</p>
+                      {card.assignment && <p className="text-ink-muted">Sales: {salesName(card.assignment.sales_id)}</p>}
+                      <p className="text-ink-muted">Kirim: {card.order.delivery_date}</p>
                       {card.assignment && (
-                        <p className="text-neutral-500">
+                        <p className="text-ink-muted">
                           Picking: {card.assignment.picking_date} {card.assignment.picking_time}
                         </p>
                       )}
                       <div className="flex items-center justify-between pt-1">
-                        <span className="text-neutral-500">{card.order.details.length} produk</span>
-                        <span className="font-medium text-neutral-800">{formatPrice(card.order.total)}</span>
+                        <span className="text-ink-muted">{card.order.details.length} produk</span>
+                        <span className="font-medium text-ink">{formatPrice(card.order.total)}</span>
                       </div>
                     </div>
                   ))}
                   {items.length === 0 && (
-                    <p className="px-1 py-3 text-center text-[11px] text-neutral-400">Tidak ada</p>
+                    <p className="px-1 py-3 text-center text-[11px] text-ink-muted">Tidak ada</p>
                   )}
                 </div>
               </div>
@@ -320,24 +320,24 @@ export default function AssignmentsKanbanPage() {
 
       <Modal title={`Konfirmasi Picking — ${pickingModal?.order.order_number ?? ""}`} open={!!pickingModal} onClose={() => setPickingModal(null)}>
         <div className="space-y-3">
-          <p className="text-xs text-neutral-500">
+          <p className="text-xs text-ink-muted">
             Periksa jumlah aktual yang diserahkan ke sales. Selisih dari jumlah pesanan diperbolehkan (partial fulfillment).
           </p>
           {pickingModal?.order.details.map((d) => (
             <div key={d.id} className="flex items-center justify-between gap-2">
-              <span className="text-sm text-neutral-700">
+              <span className="text-sm text-ink">
                 {products.find((p) => p.id === d.product_id)?.name ?? d.product_id} (pesan: {d.quantity})
               </span>
               <input
                 type="number"
                 value={pickingQty[d.product_id] ?? ""}
                 onChange={(e) => setPickingQty((prev) => ({ ...prev, [d.product_id]: e.target.value }))}
-                className="w-24 rounded-md border border-neutral-300 px-2 py-1 text-sm"
+                className="w-24 rounded-md border border-border px-2 py-1 text-sm"
               />
             </div>
           ))}
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={() => setPickingModal(null)} className="rounded-md px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100">
+            <button type="button" onClick={() => setPickingModal(null)} className="rounded-md px-4 py-2 text-sm font-medium text-ink-muted hover:bg-surface-page">
               Batal
             </button>
             <button type="button" onClick={submitPickingConfirm} disabled={submitting} className="rounded-md bg-forest-700 px-4 py-2 text-sm font-medium text-white hover:bg-forest-600 disabled:opacity-50">
@@ -351,14 +351,14 @@ export default function AssignmentsKanbanPage() {
         <div className="space-y-3">
           <TextField label="Alasan Pembatalan" value={cancelReason} onChange={setCancelReason} placeholder="Wajib diisi" />
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={() => setCancelModal(null)} className="rounded-md px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100">
+            <button type="button" onClick={() => setCancelModal(null)} className="rounded-md px-4 py-2 text-sm font-medium text-ink-muted hover:bg-surface-page">
               Batal
             </button>
             <button
               type="button"
               onClick={submitCancel}
               disabled={submitting || !cancelReason.trim()}
-              className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-500 disabled:opacity-50"
+              className="rounded-md bg-danger px-4 py-2 text-sm font-medium text-white hover:bg-danger/90 disabled:opacity-50"
             >
               {submitting ? "Memproses..." : "Ya, Batalkan"}
             </button>

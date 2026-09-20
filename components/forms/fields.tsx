@@ -11,9 +11,9 @@ interface FieldWrapperProps {
 function FieldWrapper({ label, error, children }: FieldWrapperProps) {
   return (
     <label className="block space-y-1 text-sm">
-      <span className="font-medium text-neutral-700">{label}</span>
+      <span className="font-medium text-ink">{label}</span>
       {children}
-      {error && <span className="block text-xs text-red-600">{error}</span>}
+      {error && <span className="block text-xs text-danger">{error}</span>}
     </label>
   );
 }
@@ -46,7 +46,7 @@ export function TextField({ label, error, value, onChange, type = "text", placeh
     return (
       <FieldWrapper label={label} error={error}>
         <div className="relative">
-          <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-neutral-400">
+          <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-ink-muted">
             Rp
           </span>
           <input
@@ -55,7 +55,7 @@ export function TextField({ label, error, value, onChange, type = "text", placeh
             value={formatThousands(onlyDigits(value))}
             placeholder={placeholder}
             onChange={(e) => onChange(onlyDigits(e.target.value))}
-            className="w-full rounded-md border border-neutral-300 py-2 pl-9 pr-3 text-sm outline-none focus:border-forest-600 focus:ring-1 focus:ring-forest-600"
+            className="w-full rounded-md border border-border py-2 pl-9 pr-3 text-sm outline-none focus:border-forest-600 focus:ring-1 focus:ring-forest-600"
           />
         </div>
       </FieldWrapper>
@@ -69,7 +69,7 @@ export function TextField({ label, error, value, onChange, type = "text", placeh
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-forest-600 focus:ring-1 focus:ring-forest-600"
+        className="w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-forest-600 focus:ring-1 focus:ring-forest-600"
       />
     </FieldWrapper>
   );
@@ -93,7 +93,7 @@ export function SelectField({ label, error, value, onChange, options }: SelectFi
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full appearance-none rounded-md border border-neutral-300 bg-white py-2 pl-3 pr-9 text-sm outline-none focus:border-forest-600 focus:ring-1 focus:ring-forest-600"
+          className="w-full appearance-none rounded-md border border-border bg-white py-2 pl-3 pr-9 text-sm outline-none focus:border-forest-600 focus:ring-1 focus:ring-forest-600"
         >
           <option value="">Pilih...</option>
           {options.map((opt) => (
@@ -104,7 +104,7 @@ export function SelectField({ label, error, value, onChange, options }: SelectFi
         </select>
         <ChevronDown
           size={16}
-          className="pointer-events-none absolute inset-y-0 right-3 my-auto text-neutral-400"
+          className="pointer-events-none absolute inset-y-0 right-3 my-auto text-ink-muted"
         />
       </div>
     </FieldWrapper>

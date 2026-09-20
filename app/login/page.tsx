@@ -29,42 +29,44 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-neutral-50 px-4">
-      <div className="w-full max-w-sm space-y-6 rounded-lg border border-neutral-200 bg-white p-6 shadow-sm">
-        <div className="flex flex-col items-center gap-2 text-center">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-forest-700 text-white">
+    <div className="flex min-h-screen items-center justify-center bg-surface-page px-4">
+      <div className="w-full max-w-[400px] space-y-6 rounded-lg border border-border bg-surface-raised p-10 shadow-md">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <div className="flex h-11 w-11 items-center justify-center rounded-md bg-accent text-white">
             <Sprout size={20} />
           </div>
-          <h1 className="text-lg font-semibold text-neutral-900">Pecel DMS</h1>
-          <p className="text-sm text-neutral-500">Masuk untuk melanjutkan</p>
+          <div className="space-y-1.5">
+            <h1 className="h1 !text-[20px]">Pecel DMS</h1>
+            <p className="body-sm text-ink-muted">Masuk untuk melanjutkan</p>
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-3">
-          {error && <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {error && <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>}
           <label className="block space-y-1 text-sm">
-            <span className="font-medium text-neutral-700">Email</span>
+            <span className="font-medium text-ink">Email</span>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-forest-600 focus:ring-1 focus:ring-forest-600"
+              className="w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-accent focus:ring-1 focus:ring-accent"
             />
           </label>
           <label className="block space-y-1 text-sm">
-            <span className="font-medium text-neutral-700">Password</span>
+            <span className="font-medium text-ink">Password</span>
             <input
               type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-forest-600 focus:ring-1 focus:ring-forest-600"
+              className="w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-accent focus:ring-1 focus:ring-accent"
             />
           </label>
           <button
             type="submit"
             disabled={submitting}
-            className="w-full rounded-md bg-forest-700 px-4 py-2 text-sm font-medium text-white hover:bg-forest-600 disabled:opacity-50"
+            className="w-full rounded-md bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50"
           >
             {submitting ? "Memproses..." : "Masuk"}
           </button>

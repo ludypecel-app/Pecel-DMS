@@ -32,7 +32,7 @@ export function DataTable<T>({
 }: DataTableProps<T>) {
   if (isLoading) {
     return (
-      <div className="rounded-lg border border-neutral-200 bg-white p-8 text-center text-sm text-neutral-500">
+      <div className="rounded-lg border border-border bg-surface-raised p-8 text-center text-sm text-ink-muted">
         Memuat data...
       </div>
     );
@@ -40,7 +40,7 @@ export function DataTable<T>({
 
   if (data.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-neutral-300 bg-white p-8 text-center text-sm text-neutral-500">
+      <div className="rounded-lg border border-dashed border-border bg-white p-8 text-center text-sm text-ink-muted">
         {emptyMessage}
       </div>
     );
@@ -49,9 +49,9 @@ export function DataTable<T>({
   return (
     <>
       {/* Tampilan tabel — desktop/tablet */}
-      <div className="hidden overflow-x-auto rounded-lg border border-neutral-200 bg-white md:block">
+      <div className="hidden overflow-x-auto rounded-lg border border-border bg-surface-raised md:block">
         <table className="w-full text-left text-sm">
-          <thead className="border-b border-neutral-200 bg-neutral-50 text-neutral-600">
+          <thead className="border-b border-border bg-surface-page text-ink-muted">
             <tr>
               {columns.map((col) => (
                 <th key={col.key} className="px-4 py-2.5 font-medium">
@@ -60,9 +60,9 @@ export function DataTable<T>({
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-neutral-100">
+          <tbody className="divide-y divide-border">
             {data.map((item) => (
-              <tr key={getRowId(item)} className="hover:bg-neutral-50">
+              <tr key={getRowId(item)} className="hover:bg-surface-page">
                 {columns.map((col) => (
                   <td key={col.key} className="px-4 py-2.5">
                     {col.render(item)}
@@ -79,7 +79,7 @@ export function DataTable<T>({
         {data.map((item) => (
           <div
             key={getRowId(item)}
-            className="rounded-lg border border-neutral-200 bg-white p-3.5"
+            className="rounded-lg border border-border bg-surface-raised p-3.5"
           >
             {columns
               .filter((c) => !c.hideOnMobile)
@@ -88,10 +88,10 @@ export function DataTable<T>({
                   key={col.key}
                   className={clsx(
                     "flex items-center justify-between gap-3 py-1 text-sm",
-                    idx === 0 && "text-[15px] font-medium text-neutral-900"
+                    idx === 0 && "text-[15px] font-medium text-ink"
                   )}
                 >
-                  {idx !== 0 && <span className="text-neutral-500">{col.header}</span>}
+                  {idx !== 0 && <span className="text-ink-muted">{col.header}</span>}
                   <span className={idx !== 0 ? "text-right" : ""}>{col.render(item)}</span>
                 </div>
               ))}

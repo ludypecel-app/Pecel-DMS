@@ -81,24 +81,24 @@ export default function AssignmentReviewPage() {
     fetchData();
   }
 
-  if (isLoading) return <p className="text-sm text-neutral-500">Memuat...</p>;
-  if (!data) return <p className="text-sm text-red-600">{error || "Data tidak ditemukan."}</p>;
+  if (isLoading) return <p className="text-sm text-ink-muted">Memuat...</p>;
+  if (!data) return <p className="text-sm text-danger">{error || "Data tidak ditemukan."}</p>;
 
   const canConfirm = data.status === "visited";
   const canReopen = data.status === "completed";
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
-      <Link href="/assignments" className="flex items-center gap-1 text-sm text-neutral-500 hover:text-neutral-700">
+      <Link href="/assignments" className="flex items-center gap-1 text-sm text-ink-muted hover:text-ink">
         <ArrowLeft size={15} /> Kembali ke Penugasan
       </Link>
 
       <div>
-        <h1 className="text-lg font-semibold text-neutral-900">Review Kunjungan — {data.orderNumber}</h1>
-        <p className="text-sm text-neutral-500">{data.warungName} · Sales: {data.salesName}</p>
+        <h1 className="h1 !text-[20px]">Review Kunjungan — {data.orderNumber}</h1>
+        <p className="text-sm text-ink-muted">{data.warungName} · Sales: {data.salesName}</p>
       </div>
 
-      {error && <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+      {error && <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>}
 
       {data.status === "completed" && data.confirmedAt && (
         <div className="rounded-md bg-forest-50 px-3 py-2 text-sm text-forest-700">
@@ -106,28 +106,28 @@ export default function AssignmentReviewPage() {
         </div>
       )}
 
-      <div className="rounded-lg border border-neutral-200 bg-white p-4">
+      <div className="rounded-lg border border-border bg-surface-raised p-4">
         <dl className="grid grid-cols-2 gap-y-2 text-sm">
-          <dt className="text-neutral-500">Check-In</dt>
+          <dt className="text-ink-muted">Check-In</dt>
           <dd className="text-right">{formatDateTime(data.checkedInAt)}</dd>
-          <dt className="text-neutral-500">Check-Out</dt>
+          <dt className="text-ink-muted">Check-Out</dt>
           <dd className="text-right">{formatDateTime(data.checkedOutAt)}</dd>
         </dl>
         {data.checkedInOutOfRange && (
-          <p className="mt-2 flex items-center gap-1.5 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-700">
+          <p className="mt-2 flex items-center gap-1.5 rounded-md bg-warning/10 px-3 py-2 text-sm text-warning">
             <AlertTriangle size={15} className="shrink-0" />
             Check-in tercatat ~{data.checkedInDistanceM}m dari titik koordinat warung — di luar radius wajar,
             mohon ditinjau.
           </p>
         )}
-        {data.visitNotes && <p className="mt-2 text-sm text-neutral-600">Catatan: {data.visitNotes}</p>}
+        {data.visitNotes && <p className="mt-2 text-sm text-ink-muted">Catatan: {data.visitNotes}</p>}
       </div>
 
-      <div className="rounded-lg border border-neutral-200 bg-white p-4">
-        <h2 className="mb-2 text-sm font-semibold text-neutral-700">Stok</h2>
+      <div className="rounded-lg border border-border bg-surface-raised p-4">
+        <h2 className="mb-2 text-sm font-semibold text-ink">Stok</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="text-neutral-500">
+            <thead className="text-ink-muted">
               <tr>
                 <th className="py-1 pr-2 font-medium">Produk</th>
                 <th className="py-1 pr-2 font-medium">Kirim</th>
@@ -136,7 +136,7 @@ export default function AssignmentReviewPage() {
                 <th className="py-1 font-medium">Sisa di Sales</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-100">
+            <tbody className="divide-y divide-border">
               {data.rows.map((r) => (
                 <tr key={r.product_id}>
                   <td className="py-1.5 pr-2">{r.product_name}</td>
@@ -151,14 +151,14 @@ export default function AssignmentReviewPage() {
         </div>
       </div>
 
-      <div className="rounded-lg border border-neutral-200 bg-white p-4">
-        <h2 className="mb-2 text-sm font-semibold text-neutral-700">Pembayaran</h2>
+      <div className="rounded-lg border border-border bg-surface-raised p-4">
+        <h2 className="mb-2 text-sm font-semibold text-ink">Pembayaran</h2>
         <dl className="grid grid-cols-2 gap-y-2 text-sm">
-          <dt className="text-neutral-500">Total Tagihan</dt>
+          <dt className="text-ink-muted">Total Tagihan</dt>
           <dd className="text-right font-medium">{formatPrice(data.totalTagihan)}</dd>
-          <dt className="text-neutral-500">Status</dt>
+          <dt className="text-ink-muted">Status</dt>
           <dd className="text-right">{data.payment ? PAYMENT_STATUS_LABEL[data.payment.status] : "-"}</dd>
-          <dt className="text-neutral-500">Metode</dt>
+          <dt className="text-ink-muted">Metode</dt>
           <dd className="text-right">{data.payment ? PAYMENT_METHOD_LABEL[data.payment.method] : "-"}</dd>
         </dl>
         {data.payment?.proofUrl && (
@@ -175,12 +175,12 @@ export default function AssignmentReviewPage() {
           </button>
         )}
         {canReopen && (
-          <button type="button" onClick={() => setReopenModal(true)} className="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-100">
+          <button type="button" onClick={() => setReopenModal(true)} className="rounded-md border border-border px-4 py-2 text-sm font-medium text-ink hover:bg-surface-page">
             Buka Kembali untuk Koreksi
           </button>
         )}
         {!canConfirm && !canReopen && (
-          <p className="text-sm text-neutral-500">
+          <p className="text-sm text-ink-muted">
             Penugasan berstatus &quot;{data.status}&quot; — belum ada aksi yang tersedia di halaman ini.
           </p>
         )}
@@ -188,13 +188,13 @@ export default function AssignmentReviewPage() {
 
       <Modal title="Buka Kembali untuk Koreksi" open={reopenModal} onClose={() => setReopenModal(false)}>
         <form onSubmit={handleReopen} className="space-y-3">
-          <p className="text-xs text-neutral-500">
+          <p className="text-xs text-ink-muted">
             Status akan dikembalikan ke Visited. Data stok/pembayaran yang sudah ada TIDAK dihapus — koreksi lanjutan
             saat ini perlu dilakukan manual (pengembangan form revisi otomatis menyusul).
           </p>
           <TextField label="Alasan" value={reopenReason} onChange={setReopenReason} placeholder="Wajib diisi" />
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={() => setReopenModal(false)} className="rounded-md px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100">
+            <button type="button" onClick={() => setReopenModal(false)} className="rounded-md px-4 py-2 text-sm font-medium text-ink-muted hover:bg-surface-page">
               Batal
             </button>
             <button type="submit" disabled={submitting || !reopenReason.trim()} className="rounded-md bg-forest-700 px-4 py-2 text-sm font-medium text-white hover:bg-forest-600 disabled:opacity-50">

@@ -45,14 +45,14 @@ export default function DashboardPage() {
   const formatPrice = (n: number) =>
     new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(n);
 
-  if (isLoading) return <p className="text-sm text-neutral-500">Memuat dashboard...</p>;
-  if (error) return <p className="text-sm text-red-600">{error}</p>;
+  if (isLoading) return <p className="text-sm text-ink-muted">Memuat dashboard...</p>;
+  if (error) return <p className="text-sm text-danger">{error}</p>;
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-lg font-semibold text-neutral-900">Dashboard</h1>
-        <p className="text-sm text-neutral-500">
+        <h1 className="h1 !text-[20px]">Dashboard</h1>
+        <p className="text-sm text-ink-muted">
           {role === "admin" ? "Ringkasan operasional hari ini" : "Ringkasan tugas Anda"}
         </p>
       </div>
@@ -70,23 +70,23 @@ export default function DashboardPage() {
             <StatCard label="Pesanan Terlambat" value={adminData.lateOrders} icon={AlertTriangle} tone={adminData.lateOrders > 0 ? "danger" : "default"} />
           </div>
 
-          <div className="rounded-lg border border-neutral-200 bg-white p-4">
-            <h2 className="mb-1 text-sm font-semibold text-neutral-700">Ringkasan Penjualan Hari Ini</h2>
+          <div className="rounded-lg border border-border bg-surface-raised p-4">
+            <h2 className="mb-1 text-sm font-semibold text-ink">Ringkasan Penjualan Hari Ini</h2>
             <p className="text-2xl font-semibold text-forest-700">{formatPrice(adminData.salesSummaryToday)}</p>
-            <p className="text-xs text-neutral-400">Total dari seluruh pembayaran yang tercatat hari ini</p>
+            <p className="text-xs text-ink-muted">Total dari seluruh pembayaran yang tercatat hari ini</p>
           </div>
 
-          <div className="rounded-lg border border-neutral-200 bg-white p-4">
-            <h2 className="mb-2 text-sm font-semibold text-neutral-700">Ringkasan Stok di Lapangan</h2>
-            <p className="mb-3 text-xs text-neutral-400">Produk yang masih dibawa sales (belum terjual/ditarik/selesai)</p>
+          <div className="rounded-lg border border-border bg-surface-raised p-4">
+            <h2 className="mb-2 text-sm font-semibold text-ink">Ringkasan Stok di Lapangan</h2>
+            <p className="mb-3 text-xs text-ink-muted">Produk yang masih dibawa sales (belum terjual/ditarik/selesai)</p>
             {adminData.stockSummary.length === 0 ? (
-              <p className="text-sm text-neutral-400">Tidak ada stok yang sedang beredar.</p>
+              <p className="text-sm text-ink-muted">Tidak ada stok yang sedang beredar.</p>
             ) : (
               <div className="space-y-1.5">
                 {adminData.stockSummary.map((s) => (
                   <div key={s.productId} className="flex items-center justify-between text-sm">
-                    <span className="text-neutral-700">{s.productName}</span>
-                    <span className="font-medium text-neutral-900">{s.outstanding}</span>
+                    <span className="text-ink">{s.productName}</span>
+                    <span className="font-medium text-ink">{s.outstanding}</span>
                   </div>
                 ))}
               </div>
@@ -110,32 +110,32 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="rounded-lg border border-neutral-200 bg-white p-4">
-              <h2 className="mb-2 text-sm font-semibold text-neutral-700">Jadwal Picking</h2>
+            <div className="rounded-lg border border-border bg-surface-raised p-4">
+              <h2 className="mb-2 text-sm font-semibold text-ink">Jadwal Picking</h2>
               {salesData.pickingSchedule.length === 0 ? (
-                <p className="text-sm text-neutral-400">Tidak ada jadwal picking.</p>
+                <p className="text-sm text-ink-muted">Tidak ada jadwal picking.</p>
               ) : (
                 <div className="space-y-1.5">
                   {salesData.pickingSchedule.map((p) => (
                     <div key={p.assignmentId} className="flex items-center justify-between text-sm">
-                      <span className="text-neutral-700">{p.orderNumber}</span>
-                      <span className="text-neutral-500">{p.pickingDate} {p.pickingTime}</span>
+                      <span className="text-ink">{p.orderNumber}</span>
+                      <span className="text-ink-muted">{p.pickingDate} {p.pickingTime}</span>
                     </div>
                   ))}
                 </div>
               )}
             </div>
 
-            <div className="rounded-lg border border-neutral-200 bg-white p-4">
-              <h2 className="mb-2 text-sm font-semibold text-neutral-700">Jadwal Pengiriman</h2>
+            <div className="rounded-lg border border-border bg-surface-raised p-4">
+              <h2 className="mb-2 text-sm font-semibold text-ink">Jadwal Pengiriman</h2>
               {salesData.deliverySchedule.length === 0 ? (
-                <p className="text-sm text-neutral-400">Tidak ada jadwal pengiriman.</p>
+                <p className="text-sm text-ink-muted">Tidak ada jadwal pengiriman.</p>
               ) : (
                 <div className="space-y-1.5">
                   {salesData.deliverySchedule.map((d) => (
                     <div key={d.assignmentId} className="flex items-center justify-between text-sm">
-                      <span className="text-neutral-700">{d.orderNumber}</span>
-                      <span className="text-neutral-500">{d.deliveryDate}</span>
+                      <span className="text-ink">{d.orderNumber}</span>
+                      <span className="text-ink-muted">{d.deliveryDate}</span>
                     </div>
                   ))}
                 </div>
@@ -143,19 +143,19 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="rounded-lg border border-neutral-200 bg-white p-4">
-            <h2 className="mb-2 text-sm font-semibold text-neutral-700">Riwayat Kunjungan Terbaru</h2>
+          <div className="rounded-lg border border-border bg-surface-raised p-4">
+            <h2 className="mb-2 text-sm font-semibold text-ink">Riwayat Kunjungan Terbaru</h2>
             {salesData.recentVisits.length === 0 ? (
-              <p className="text-sm text-neutral-400">Belum ada riwayat kunjungan.</p>
+              <p className="text-sm text-ink-muted">Belum ada riwayat kunjungan.</p>
             ) : (
               <div className="space-y-1.5">
                 {salesData.recentVisits.map((v) => (
                   <div key={v.assignmentId} className="flex items-center justify-between text-sm">
-                    <span className="flex items-center gap-1.5 text-neutral-700">
+                    <span className="flex items-center gap-1.5 text-ink">
                       <CheckCircle2 size={13} className="text-forest-600" />
                       {v.orderNumber}
                     </span>
-                    <span className="text-neutral-500">{ORDER_STATUS_LABEL_SHORT[v.status] ?? v.status}</span>
+                    <span className="text-ink-muted">{ORDER_STATUS_LABEL_SHORT[v.status] ?? v.status}</span>
                   </div>
                 ))}
               </div>

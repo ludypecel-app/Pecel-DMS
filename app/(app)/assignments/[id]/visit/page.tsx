@@ -104,14 +104,14 @@ export default function VisitDataEntryPage() {
     setSuccess(true);
   }
 
-  if (isLoading) return <p className="text-sm text-neutral-500">Memuat...</p>;
-  if (!form) return <p className="text-sm text-red-600">{error || "Data tidak ditemukan."}</p>;
+  if (isLoading) return <p className="text-sm text-ink-muted">Memuat...</p>;
+  if (!form) return <p className="text-sm text-danger">{error || "Data tidak ditemukan."}</p>;
 
   if (success) {
     return (
-      <div className="mx-auto max-w-md space-y-3 rounded-lg border border-neutral-200 bg-white p-6 text-center">
-        <h1 className="text-lg font-semibold text-neutral-900">Check-Out Berhasil</h1>
-        <p className="text-sm text-neutral-500">
+      <div className="mx-auto max-w-md space-y-3 rounded-lg border border-border bg-surface-raised p-6 text-center">
+        <h1 className="h1 !text-[20px]">Check-Out Berhasil</h1>
+        <p className="text-sm text-ink-muted">
           Data kunjungan untuk {form.orderNumber} telah tersimpan dan menunggu konfirmasi admin.
         </p>
         <Link href="/assignments" className="inline-block rounded-md bg-forest-700 px-4 py-2 text-sm font-medium text-white hover:bg-forest-600">
@@ -122,72 +122,72 @@ export default function VisitDataEntryPage() {
   }
 
   if (form.alreadyCheckedOut) {
-    return <p className="text-sm text-neutral-500">Kunjungan untuk pesanan ini sudah di-check-out sebelumnya.</p>;
+    return <p className="text-sm text-ink-muted">Kunjungan untuk pesanan ini sudah di-check-out sebelumnya.</p>;
   }
 
   return (
     <div className="mx-auto max-w-xl space-y-4">
-      <Link href="/assignments" className="flex items-center gap-1 text-sm text-neutral-500 hover:text-neutral-700">
+      <Link href="/assignments" className="flex items-center gap-1 text-sm text-ink-muted hover:text-ink">
         <ArrowLeft size={15} /> Kembali ke Penugasan
       </Link>
 
       <div>
-        <h1 className="text-lg font-semibold text-neutral-900">Pendataan Kunjungan</h1>
-        <p className="text-sm text-neutral-500">{form.orderNumber} · {form.warungName}</p>
+        <h1 className="h1 !text-[20px]">Pendataan Kunjungan</h1>
+        <p className="text-sm text-ink-muted">{form.orderNumber} · {form.warungName}</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
-        {error && <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+        {error && <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>}
 
-        <section className="space-y-2 rounded-lg border border-neutral-200 bg-white p-4">
-          <h2 className="text-sm font-semibold text-neutral-700">Pendataan Stok</h2>
+        <section className="space-y-2 rounded-lg border border-border bg-surface-raised p-4">
+          <h2 className="text-sm font-semibold text-ink">Pendataan Stok</h2>
           {computed.map((r) => (
-            <div key={r.product_id} className="space-y-2 rounded-md border border-neutral-100 p-3">
-              <p className="text-sm font-medium text-neutral-800">{r.product_name}</p>
+            <div key={r.product_id} className="space-y-2 rounded-md border border-border p-3">
+              <p className="text-sm font-medium text-ink">{r.product_name}</p>
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div>
-                  <p className="text-neutral-500">Jumlah Pengiriman</p>
-                  <p className="font-medium text-neutral-700">{r.shipped_quantity}</p>
+                  <p className="text-ink-muted">Jumlah Pengiriman</p>
+                  <p className="font-medium text-ink">{r.shipped_quantity}</p>
                 </div>
                 <div>
-                  <label className="block text-neutral-500">Penjualan</label>
+                  <label className="block text-ink-muted">Penjualan</label>
                   <input
                     type="number"
                     min={0}
                     max={r.shipped_quantity}
                     value={rows[r.product_id]?.sold ?? "0"}
                     onChange={(e) => updateRow(r.product_id, { sold: e.target.value })}
-                    className="mt-0.5 w-full rounded-md border border-neutral-300 px-2 py-1 text-sm"
+                    className="mt-0.5 w-full rounded-md border border-border px-2 py-1 text-sm"
                   />
                 </div>
                 <div>
-                  <p className="text-neutral-500">Sisa Stok</p>
-                  <p className="font-medium text-neutral-700">{r.sisaStok}</p>
+                  <p className="text-ink-muted">Sisa Stok</p>
+                  <p className="font-medium text-ink">{r.sisaStok}</p>
                 </div>
                 <div>
-                  <label className="block text-neutral-500">Produk Ditarik</label>
+                  <label className="block text-ink-muted">Produk Ditarik</label>
                   <input
                     type="number"
                     min={0}
                     max={r.sisaStok}
                     value={rows[r.product_id]?.returned ?? "0"}
                     onChange={(e) => updateRow(r.product_id, { returned: e.target.value })}
-                    className="mt-0.5 w-full rounded-md border border-neutral-300 px-2 py-1 text-sm"
+                    className="mt-0.5 w-full rounded-md border border-border px-2 py-1 text-sm"
                   />
                 </div>
               </div>
-              <p className="text-xs text-neutral-500">
-                Total Stok Saat Ini: <span className="font-medium text-neutral-700">{r.totalStokSaatIni}</span>
+              <p className="text-xs text-ink-muted">
+                Total Stok Saat Ini: <span className="font-medium text-ink">{r.totalStokSaatIni}</span>
               </p>
             </div>
           ))}
         </section>
 
-        <section className="space-y-3 rounded-lg border border-neutral-200 bg-white p-4">
-          <h2 className="text-sm font-semibold text-neutral-700">Pembayaran</h2>
+        <section className="space-y-3 rounded-lg border border-border bg-surface-raised p-4">
+          <h2 className="text-sm font-semibold text-ink">Pembayaran</h2>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-neutral-600">Total Tagihan</span>
-            <span className="font-semibold text-neutral-900">{formatPrice(totalTagihan)}</span>
+            <span className="text-ink-muted">Total Tagihan</span>
+            <span className="font-semibold text-ink">{formatPrice(totalTagihan)}</span>
           </div>
           <SelectField
             label="Status Pembayaran"
@@ -217,25 +217,25 @@ export default function VisitDataEntryPage() {
             onChange={setProofUrl}
             placeholder="Tempel link foto/file bukti pembayaran"
           />
-          <p className="text-xs text-neutral-400">
+          <p className="text-xs text-ink-muted">
             Upload foto langsung belum tersedia — integrasi penyimpanan file (Google Drive) menyusul. Untuk saat ini, unggah foto ke penyimpanan pilihan Anda lalu tempel link-nya di sini.
           </p>
         </section>
 
-        <section className="space-y-2 rounded-lg border border-neutral-200 bg-white p-4">
+        <section className="space-y-2 rounded-lg border border-border bg-surface-raised p-4">
           <label className="block space-y-1 text-sm">
-            <span className="font-medium text-neutral-700">Catatan Kunjungan (opsional)</span>
+            <span className="font-medium text-ink">Catatan Kunjungan (opsional)</span>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
-              className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-forest-600 focus:ring-1 focus:ring-forest-600"
+              className="w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-forest-600 focus:ring-1 focus:ring-forest-600"
             />
           </label>
         </section>
 
         <div className="flex justify-end gap-2 pb-4">
-          <button type="button" onClick={() => router.push("/assignments")} className="rounded-md px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100">
+          <button type="button" onClick={() => router.push("/assignments")} className="rounded-md px-4 py-2 text-sm font-medium text-ink-muted hover:bg-surface-page">
             Batal
           </button>
           <button type="submit" disabled={submitting} className="rounded-md bg-forest-700 px-5 py-2 text-sm font-medium text-white hover:bg-forest-600 disabled:opacity-50">

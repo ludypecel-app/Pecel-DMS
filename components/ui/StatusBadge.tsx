@@ -6,8 +6,8 @@ export function StatusBadge({ status }: { status: ActiveStatus }) {
   return (
     <span
       className={clsx(
-        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
-        active ? "bg-forest-100 text-forest-700" : "bg-neutral-100 text-neutral-500"
+        "caption inline-flex items-center rounded-full px-2 py-0.5",
+        active ? "bg-success/15 text-success" : "bg-ink-muted/10 text-ink-muted"
       )}
     >
       {active ? "Aktif" : "Nonaktif"}
