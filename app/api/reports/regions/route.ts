@@ -66,22 +66,27 @@ export async function GET(request: NextRequest) {
     });
     const orderMap = new Map(orders.map((o) => [o.id, o]));
 
-    // Aktif = belum completed/cancelled — stok yang sudah "selesai" (visit
-    // sudah dikonfirmasi/dibatalkan) tidak lagi dihitung sebagai stok yang
-    // masih ada di warung. Sama persis dengan logika "Ringkasan Stok di
-    // Lapangan" di dashboard, hanya diagregasi per warung di sini.
-    const activeAssignmentIds = new Set(assignments.filter((a) => !NOT_DONE.has(a.status)).map((a) => a.id));
-
     /**
      * Total stok yang saat ini berada di suatu warung: dari seluruh
-     * Assignment (yang masih aktif) atas pesanan-pesanan warung tersebut,
-     * dihitung dari StockTransaction: picking_out (+) dikurangi sales_out
-     * dan returned (-). Dikembalikan totalnya (semua produk digabung) dan
-     * rincian per produk.
+     * Assignment atas pesanan-pesanan warung tersebut, dihitung dari
+     * StockTransaction: picking_out (+) dikurangi sales_out dan returned
+     * (-). Dikembalikan totalnya (semua produk digabung) dan rincian per
+     * produk.
+     *
+     * PENTING: assignment yang sudah "completed" TETAP dihitung di sini —
+     * beda dengan "Ringkasan Stok di Lapangan" milik dashboard yang hanya
+     * melacak stok yang masih dibawa sales (makanya dibatasi ke assignment
+     * aktif). Stok warung ini melacak barang yang FISIK ada di warung:
+     * begitu Check-Out selesai (assignment jadi completed), sisa barang
+     * (dikirim - terjual - ditarik) tetap tertinggal di warung, bukan
+     * hilang — jadi tidak boleh ikut disaring hanya karena assignment-nya
+     * sudah selesai. Hanya assignment yang "cancelled" yang dikecualikan,
+     * karena barangnya tidak pernah benar-benar sampai/tercatat sudah
+     * ditarik kembali lewat StockTransaction "retur_pembatalan".
      */
     function buildStockForOrders(orderIds: Set<string>) {
       const relevantAssignmentIds = new Set(
-        assignments.filter((a) => orderIds.has(a.order_id) && activeAssignmentIds.has(a.id)).map((a) => a.id)
+        assignments.filter((a) => orderIds.has(a.order_id) && a.status !== "cancelled").map((a) => a.id)
       );
       const byProduct = new Map<string, number>();
       stockTx
