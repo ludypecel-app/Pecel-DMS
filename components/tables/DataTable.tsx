@@ -16,6 +16,21 @@ interface DataTableProps<T> {
   getRowId: (item: T) => string;
   emptyMessage?: string;
   isLoading?: boolean;
+  /**
+   * Opsional — kalau diisi, seluruh baris/card bisa diklik untuk membuka
+   * detail (mis. modal detail pesanan/penugasan), tanpa mengganggu tombol
+   * atau link aksi di dalam kolom (klik pada elemen interaktif tidak akan
+   * ikut memicu onRowClick, lihat isInteractiveTarget di bawah).
+   */
+  onRowClick?: (item: T) => void;
+}
+
+/** Cek apakah target klik (atau leluhurnya) elemen interaktif seperti
+ * tombol/link/input — dipakai supaya klik tombol aksi di dalam baris tidak
+ * ikut membuka modal detail lewat onRowClick. */
+function isInteractiveTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof Element)) return false;
+  return !!target.closest("button, a, input, select, textarea, label");
 }
 
 /**
@@ -29,6 +44,7 @@ export function DataTable<T>({
   getRowId,
   emptyMessage = "Belum ada data.",
   isLoading,
+  onRowClick,
 }: DataTableProps<T>) {
   if (isLoading) {
     return (
@@ -62,7 +78,18 @@ export function DataTable<T>({
           </thead>
           <tbody className="divide-y divide-border">
             {data.map((item) => (
-              <tr key={getRowId(item)} className="hover:bg-surface-page">
+              <tr
+                key={getRowId(item)}
+                onClick={
+                  onRowClick
+                    ? (e) => {
+                        if (isInteractiveTarget(e.target)) return;
+                        onRowClick(item);
+                      }
+                    : undefined
+                }
+                className={clsx("hover:bg-surface-page", onRowClick && "cursor-pointer")}
+              >
                 {columns.map((col) => (
                   <td key={col.key} className="px-4 py-2.5">
                     {col.render(item)}
@@ -79,7 +106,18 @@ export function DataTable<T>({
         {data.map((item) => (
           <div
             key={getRowId(item)}
-            className="rounded-lg border border-border bg-surface-raised p-3.5"
+            onClick={
+              onRowClick
+                ? (e) => {
+                    if (isInteractiveTarget(e.target)) return;
+                    onRowClick(item);
+                  }
+                : undefined
+            }
+            className={clsx(
+              "rounded-lg border border-border bg-surface-raised p-3.5",
+              onRowClick && "cursor-pointer active:bg-surface-page"
+            )}
           >
             {columns
               .filter((c) => !c.hideOnMobile)

@@ -10,6 +10,8 @@ import { SelectField, TextField } from "@/components/forms/fields";
 import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import { useActiveSales } from "@/features/sales/hooks/useActiveSales";
 import { useActiveProducts } from "@/features/products/hooks/useActiveProducts";
+import { useActiveRegions } from "@/features/regions/hooks/useActiveRegions";
+import { useActiveWarungs } from "@/features/warungs/hooks/useActiveWarungs";
 import { ORDER_STATUS_LABEL, ORDER_STATUS_COLOR } from "@/features/orders/constants";
 import type { OrderWithDetails } from "@/features/orders/types/order.types";
 import type { AssignmentWithOrder } from "@/features/assignments/types/assignment.types";
@@ -19,9 +21,16 @@ export default function AssignmentsPage() {
   const role = session?.user?.role;
   const salesList = useActiveSales();
   const products = useActiveProducts();
+  const regions = useActiveRegions();
+  const warungs = useActiveWarungs();
   const [schedulingOrders, setSchedulingOrders] = useState<OrderWithDetails[]>([]);
   const [assignments, setAssignments] = useState<AssignmentWithOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Klik baris/card (di luar tombol aksi) membuka modal detail — berlaku
+  // untuk semua status, bukan cuma yang sedang ada aksinya.
+  const [detailOrder, setDetailOrder] = useState<OrderWithDetails | null>(null);
+  const [detailAssignment, setDetailAssignment] = useState<AssignmentWithOrder | null>(null);
 
   const [assignModalOrder, setAssignModalOrder] = useState<OrderWithDetails | null>(null);
   const [form, setForm] = useState({ sales_id: "", picking_date: "", picking_time: "", delivery_date: "" });
@@ -204,6 +213,86 @@ export default function AssignmentsPage() {
     fetchData();
   }
 
+  function warungName(id: string) {
+    return warungs.find((w) => w.id === id)?.name ?? id;
+  }
+  function regionName(id: string) {
+    return regions.find((r) => r.id === id)?.name ?? id;
+  }
+  const formatPrice = (n: number) =>
+    new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(n);
+
+  /** Tombol aksi untuk penugasan sesuai status — dipakai baik di kolom
+   * tabel maupun di modal detail (klik baris), supaya perilakunya konsisten
+   * di semua tempat. */
+  function renderAssignmentActions(a: AssignmentWithOrder) {
+    // Aksi sales (terima/tolak/mulai kirim/check-in) hanya tampil untuk
+    // akun sales yang login — identitas diambil dari session di server,
+    // bukan dipilih manual lagi.
+    const isSales = role === "sales";
+
+    if (a.status === "assigned") {
+      return isSales ? (
+        <div className="flex gap-3">
+          <button type="button" onClick={() => handleAccept(a.id)} className="text-sm font-medium text-forest-700 hover:underline">
+            Terima
+          </button>
+          <button type="button" onClick={() => setRejectModalId(a.id)} className="text-sm font-medium text-danger hover:underline">
+            Tolak
+          </button>
+        </div>
+      ) : (
+        <span className="text-xs text-ink-muted">Menunggu sales</span>
+      );
+    }
+    if (a.status === "ready_to_picking") {
+      return !isSales ? (
+        <button type="button" onClick={() => openPickingModal(a)} className="text-sm font-medium text-forest-700 hover:underline">
+          Konfirmasi Picking
+        </button>
+      ) : (
+        <span className="text-xs text-ink-muted">Menunggu admin</span>
+      );
+    }
+    if (a.status === "ready_to_delivery") {
+      return isSales ? (
+        <button type="button" onClick={() => handleStartDelivery(a.id)} className="text-sm font-medium text-forest-700 hover:underline">
+          Mulai Kirim
+        </button>
+      ) : (
+        <span className="text-xs text-ink-muted">Menunggu sales</span>
+      );
+    }
+    if (a.status === "on_delivery") {
+      return isSales ? (
+        <button type="button" onClick={() => handleCheckIn(a.id)} className="text-sm font-medium text-forest-700 hover:underline">
+          Check In (Sampai)
+        </button>
+      ) : (
+        <span className="text-xs text-ink-muted">Menunggu sales</span>
+      );
+    }
+    if (a.status === "arrived") {
+      return isSales ? (
+        <Link href={`/assignments/${a.id}/visit`} className="text-sm font-medium text-forest-700 hover:underline">
+          Isi Data Kunjungan
+        </Link>
+      ) : (
+        <span className="text-xs text-ink-muted">Menunggu sales</span>
+      );
+    }
+    if (a.status === "visited" || a.status === "completed") {
+      return !isSales ? (
+        <Link href={`/assignments/${a.id}/review`} className="text-sm font-medium text-forest-700 hover:underline">
+          {a.status === "visited" ? "Review & Konfirmasi" : "Lihat Review"}
+        </Link>
+      ) : (
+        <span className="text-xs text-ink-muted">Menunggu admin</span>
+      );
+    }
+    return <span className="text-xs text-ink-muted">—</span>;
+  }
+
   const schedulingColumns: Column<OrderWithDetails>[] = [
     { key: "order_number", header: "No. Pesanan", render: (o) => o.order_number },
     { key: "delivery_date", header: "Tgl Kirim", render: (o) => o.delivery_date },
@@ -238,73 +327,7 @@ export default function AssignmentsPage() {
     {
       key: "actions",
       header: "Aksi",
-      render: (a) => {
-        // Aksi sales (terima/tolak/mulai kirim/check-in) hanya tampil untuk
-        // akun sales yang login — identitas diambil dari session di server,
-        // bukan dipilih manual lagi.
-        const isSales = role === "sales";
-
-        if (a.status === "assigned") {
-          return isSales ? (
-            <div className="flex gap-3">
-              <button type="button" onClick={() => handleAccept(a.id)} className="text-sm font-medium text-forest-700 hover:underline">
-                Terima
-              </button>
-              <button type="button" onClick={() => setRejectModalId(a.id)} className="text-sm font-medium text-danger hover:underline">
-                Tolak
-              </button>
-            </div>
-          ) : (
-            <span className="text-xs text-ink-muted">Menunggu sales</span>
-          );
-        }
-        if (a.status === "ready_to_picking") {
-          return !isSales ? (
-            <button type="button" onClick={() => openPickingModal(a)} className="text-sm font-medium text-forest-700 hover:underline">
-              Konfirmasi Picking
-            </button>
-          ) : (
-            <span className="text-xs text-ink-muted">Menunggu admin</span>
-          );
-        }
-        if (a.status === "ready_to_delivery") {
-          return isSales ? (
-            <button type="button" onClick={() => handleStartDelivery(a.id)} className="text-sm font-medium text-forest-700 hover:underline">
-              Mulai Kirim
-            </button>
-          ) : (
-            <span className="text-xs text-ink-muted">Menunggu sales</span>
-          );
-        }
-        if (a.status === "on_delivery") {
-          return isSales ? (
-            <button type="button" onClick={() => handleCheckIn(a.id)} className="text-sm font-medium text-forest-700 hover:underline">
-              Check In (Sampai)
-            </button>
-          ) : (
-            <span className="text-xs text-ink-muted">Menunggu sales</span>
-          );
-        }
-        if (a.status === "arrived") {
-          return isSales ? (
-            <Link href={`/assignments/${a.id}/visit`} className="text-sm font-medium text-forest-700 hover:underline">
-              Isi Data Kunjungan
-            </Link>
-          ) : (
-            <span className="text-xs text-ink-muted">Menunggu sales</span>
-          );
-        }
-        if (a.status === "visited" || a.status === "completed") {
-          return !isSales ? (
-            <Link href={`/assignments/${a.id}/review`} className="text-sm font-medium text-forest-700 hover:underline">
-              {a.status === "visited" ? "Review & Konfirmasi" : "Lihat Review"}
-            </Link>
-          ) : (
-            <span className="text-xs text-ink-muted">Menunggu admin</span>
-          );
-        }
-        return <span className="text-xs text-ink-muted">—</span>;
-      },
+      render: (a) => renderAssignmentActions(a),
     },
   ];
 
@@ -338,6 +361,7 @@ export default function AssignmentsPage() {
             getRowId={(o) => o.id}
             isLoading={isLoading}
             emptyMessage="Tidak ada pesanan yang menunggu penugasan."
+            onRowClick={(o) => setDetailOrder(o)}
           />
         </section>
       )}
@@ -350,8 +374,141 @@ export default function AssignmentsPage() {
           getRowId={(a) => a.id}
           isLoading={isLoading}
           emptyMessage="Belum ada penugasan."
+          onRowClick={(a) => setDetailAssignment(a)}
         />
       </section>
+
+      <Modal title={`Detail Pesanan — ${detailOrder?.order_number ?? ""}`} open={!!detailOrder} onClose={() => setDetailOrder(null)} size="lg">
+        {detailOrder && (
+          <div className="space-y-4">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="text-sm font-semibold text-ink">{warungName(detailOrder.warung_id)}</p>
+                <p className="text-xs text-ink-muted">{regionName(detailOrder.region_id)}</p>
+              </div>
+              <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${ORDER_STATUS_COLOR[detailOrder.status]}`}>
+                {ORDER_STATUS_LABEL[detailOrder.status]}
+              </span>
+            </div>
+
+            <div className="rounded-lg border border-border p-3">
+              <dl className="grid grid-cols-2 gap-y-1.5 text-sm">
+                <dt className="text-ink-muted">Tanggal Pesanan</dt>
+                <dd className="text-right">{detailOrder.order_date}</dd>
+                <dt className="text-ink-muted">Tanggal Pengiriman</dt>
+                <dd className="text-right">{detailOrder.delivery_date}</dd>
+              </dl>
+            </div>
+
+            <div className="rounded-lg border border-border p-3">
+              <h3 className="mb-2 text-sm font-medium text-ink">Detail Produk</h3>
+              <div className="divide-y divide-border">
+                {detailOrder.details.map((d) => (
+                  <div key={d.id} className="flex items-center justify-between py-1.5 text-sm">
+                    <span>
+                      {products.find((p) => p.id === d.product_id)?.name ?? d.product_id} — {d.quantity} × {formatPrice(d.unit_price)}
+                    </span>
+                    <span className="font-medium">{formatPrice(d.subtotal)}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-2 flex justify-between border-t border-border pt-2 text-sm font-semibold">
+                <span>Total</span>
+                <span>{formatPrice(detailOrder.total)}</span>
+              </div>
+            </div>
+
+            {role === "admin" && (
+              <div className="pt-1" onClick={() => setDetailOrder(null)}>
+                <button
+                  type="button"
+                  onClick={() => openAssignModal(detailOrder)}
+                  className="w-full rounded-md bg-forest-700 px-3 py-2 text-sm font-medium text-white hover:bg-forest-600"
+                >
+                  Tugaskan Sales
+                </button>
+              </div>
+            )}
+
+            <div className="flex justify-between border-t border-border pt-3">
+              <Link href={`/orders/${detailOrder.id}`} className="text-sm font-medium text-forest-700 hover:underline">
+                Buka Halaman Detail Pesanan →
+              </Link>
+              <button type="button" onClick={() => setDetailOrder(null)} className="rounded-md px-4 py-2 text-sm font-medium text-ink-muted hover:bg-surface-page">
+                Tutup
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      <Modal title={`Detail Penugasan — ${detailAssignment?.order?.order_number ?? ""}`} open={!!detailAssignment} onClose={() => setDetailAssignment(null)} size="lg">
+        {detailAssignment?.order && (
+          <div className="space-y-4">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="text-sm font-semibold text-ink">{warungName(detailAssignment.order.warung_id)}</p>
+                <p className="text-xs text-ink-muted">{regionName(detailAssignment.order.region_id)}</p>
+              </div>
+              <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${ORDER_STATUS_COLOR[detailAssignment.status]}`}>
+                {ORDER_STATUS_LABEL[detailAssignment.status]}
+              </span>
+            </div>
+
+            {detailAssignment.status === "cancelled" && detailAssignment.order.cancellation_reason && (
+              <div className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">
+                Dibatalkan: {detailAssignment.order.cancellation_reason}
+              </div>
+            )}
+
+            <div className="rounded-lg border border-border p-3">
+              <dl className="grid grid-cols-2 gap-y-1.5 text-sm">
+                <dt className="text-ink-muted">Tanggal Pesanan</dt>
+                <dd className="text-right">{detailAssignment.order.order_date}</dd>
+                <dt className="text-ink-muted">Tanggal Pengiriman</dt>
+                <dd className="text-right">{detailAssignment.order.delivery_date}</dd>
+                <dt className="text-ink-muted">Sales</dt>
+                <dd className="text-right">{salesList.find((s) => s.id === detailAssignment.sales_id)?.name ?? detailAssignment.sales_id}</dd>
+                <dt className="text-ink-muted">Jadwal Picking</dt>
+                <dd className="text-right">
+                  {detailAssignment.picking_date} {detailAssignment.picking_time}
+                </dd>
+              </dl>
+            </div>
+
+            <div className="rounded-lg border border-border p-3">
+              <h3 className="mb-2 text-sm font-medium text-ink">Detail Produk</h3>
+              <div className="divide-y divide-border">
+                {detailAssignment.order.details.map((d) => (
+                  <div key={d.id} className="flex items-center justify-between py-1.5 text-sm">
+                    <span>
+                      {products.find((p) => p.id === d.product_id)?.name ?? d.product_id} — {d.quantity} × {formatPrice(d.unit_price)}
+                    </span>
+                    <span className="font-medium">{formatPrice(d.subtotal)}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-2 flex justify-between border-t border-border pt-2 text-sm font-semibold">
+                <span>Total</span>
+                <span>{formatPrice(detailAssignment.order.total)}</span>
+              </div>
+            </div>
+
+            <div className="pt-1" onClick={() => setDetailAssignment(null)}>
+              {renderAssignmentActions(detailAssignment)}
+            </div>
+
+            <div className="flex justify-between border-t border-border pt-3">
+              <Link href={`/orders/${detailAssignment.order.id}`} className="text-sm font-medium text-forest-700 hover:underline">
+                Buka Halaman Detail Pesanan →
+              </Link>
+              <button type="button" onClick={() => setDetailAssignment(null)} className="rounded-md px-4 py-2 text-sm font-medium text-ink-muted hover:bg-surface-page">
+                Tutup
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       <Modal title={`Tugaskan Sales — ${assignModalOrder?.order_number ?? ""}`} open={!!assignModalOrder} onClose={() => setAssignModalOrder(null)}>
         <form onSubmit={handleAssign} className="space-y-3">
