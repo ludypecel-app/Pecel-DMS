@@ -35,7 +35,7 @@ export function generateNextCode(existingCodes: string[], prefix: string, padLen
   let max = 0;
   for (const code of existingCodes) {
     const match = code.match(pattern);
-    if (match) {
+    if (match && match[1]) {
       const n = parseInt(match[1], 10);
       if (n > max) max = n;
     }
