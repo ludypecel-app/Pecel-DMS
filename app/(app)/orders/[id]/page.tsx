@@ -1,23 +1,37 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Pencil, Plus, Trash2 } from "lucide-react";
 import { useActiveRegions } from "@/features/regions/hooks/useActiveRegions";
 import { useActiveWarungs } from "@/features/warungs/hooks/useActiveWarungs";
+import { useActiveProducts } from "@/features/products/hooks/useActiveProducts";
 import { ORDER_STATUS_LABEL, ORDER_STATUS_COLOR } from "@/features/orders/constants";
 import { Modal } from "@/components/ui/Modal";
+import { SelectField, TextField } from "@/components/forms/fields";
 import { useAutoRefresh } from "@/hooks/useAutoRefresh";
+import type { OrderStatus } from "@/types/entities";
 import type { OrderWithDetails } from "@/features/orders/types/order.types";
 
 const NOT_CANCELLABLE = ["arrived", "visited", "completed", "cancelled"];
+
+// Pesanan masih boleh diedit (tanggal kirim & daftar produk) selama belum
+// ada stok yang bergerak secara fisik — yaitu sebelum picking dikonfirmasi
+// admin. Harus sama persis dengan ORDER_EDITABLE_STATUSES di order.service.ts.
+const EDITABLE_STATUSES: OrderStatus[] = ["scheduling", "assigned", "ready_to_picking"];
+
+interface ItemRow {
+  product_id: string;
+  quantity: string;
+}
 
 export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const regions = useActiveRegions();
   const warungs = useActiveWarungs();
+  const products = useActiveProducts();
 
   const [order, setOrder] = useState<OrderWithDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -25,6 +39,26 @@ export default function OrderDetailPage() {
   const [reason, setReason] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  // --- Modal "Edit Pesanan" — tanggal kirim & daftar produk. ---
+  const [editOpen, setEditOpen] = useState(false);
+  const [editDeliveryDate, setEditDeliveryDate] = useState("");
+  const [editItems, setEditItems] = useState<ItemRow[]>([]);
+  const [editErrors, setEditErrors] = useState<Record<string, string>>({});
+  const [editFormError, setEditFormError] = useState("");
+  const [editSubmitting, setEditSubmitting] = useState(false);
+
+  const editRowsWithPrice = useMemo(
+    () =>
+      editItems.map((row) => {
+        const product = products.find((p) => p.id === row.product_id);
+        const qty = Number(row.quantity) || 0;
+        const subtotal = product ? product.price * qty : 0;
+        return { ...row, product, subtotal };
+      }),
+    [editItems, products]
+  );
+  const editTotal = editRowsWithPrice.reduce((sum, r) => sum + r.subtotal, 0);
 
   const fetchOrder = useCallback(
     async (opts?: { silent?: boolean }) => {
@@ -80,11 +114,77 @@ export default function OrderDetailPage() {
     fetchOrder();
   }
 
+  function openEditModal() {
+    if (!order) return;
+    setEditDeliveryDate(order.delivery_date);
+    setEditItems(order.details.map((d) => ({ product_id: d.product_id, quantity: String(d.quantity) })));
+    setEditErrors({});
+    setEditFormError("");
+    setEditOpen(true);
+  }
+
+  function addEditItemRow() {
+    setEditItems((prev) => [...prev, { product_id: "", quantity: "1" }]);
+  }
+
+  function removeEditItemRow(index: number) {
+    setEditItems((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function updateEditItemRow(index: number, patch: Partial<ItemRow>) {
+    setEditItems((prev) =>
+      prev.map((row, i) =>
+        i === index
+          ? { product_id: patch.product_id ?? row.product_id, quantity: patch.quantity ?? row.quantity }
+          : row
+      )
+    );
+  }
+
+  async function handleEditSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setEditSubmitting(true);
+    setEditErrors({});
+    setEditFormError("");
+
+    const payload = {
+      delivery_date: editDeliveryDate,
+      items: editItems
+        .filter((r) => r.product_id)
+        .map((r) => ({ product_id: r.product_id, quantity: Number(r.quantity) || 0 })),
+    };
+
+    const res = await fetch(`/api/orders/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const json = await res.json();
+
+    if (!res.ok) {
+      if (json.details) {
+        const flat: Record<string, string> = {};
+        Object.entries(json.details).forEach(([key, val]) => {
+          flat[key] = Array.isArray(val) ? (val[0] as string) : String(val);
+        });
+        setEditErrors(flat);
+      } else {
+        setEditFormError(json.error ?? "Gagal menyimpan perubahan pesanan");
+      }
+      setEditSubmitting(false);
+      return;
+    }
+
+    setEditSubmitting(false);
+    setEditOpen(false);
+    fetchOrder();
+  }
+
   if (isLoading) return <p className="text-sm text-ink-muted">Memuat...</p>;
   if (!order) return <p className="text-sm text-ink-muted">Pesanan tidak ditemukan.</p>;
 
   const canCancel = !NOT_CANCELLABLE.includes(order.status) && order.status !== "on_delivery";
-  const canEdit = order.status === "scheduling";
+  const canEdit = EDITABLE_STATUSES.includes(order.status);
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
@@ -137,11 +237,15 @@ export default function OrderDetailPage() {
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {canEdit && (
-          <p className="text-xs text-ink-muted">
-            Pesanan masih bisa diedit selama berstatus Scheduling (fitur edit detail akan tersedia di form terpisah pada iterasi berikutnya bila diperlukan).
-          </p>
+          <button
+            type="button"
+            onClick={openEditModal}
+            className="flex items-center gap-1.5 rounded-md border border-border px-4 py-2 text-sm font-medium text-ink hover:bg-surface-page"
+          >
+            <Pencil size={14} /> Edit Pesanan
+          </button>
         )}
         {canCancel && (
           <button
@@ -178,6 +282,73 @@ export default function OrderDetailPage() {
             </button>
             <button type="submit" disabled={submitting} className="rounded-md bg-danger px-4 py-2 text-sm font-medium text-white hover:bg-danger/90 disabled:opacity-50">
               {submitting ? "Memproses..." : "Ya, Batalkan Pesanan"}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal title="Edit Pesanan" open={editOpen} onClose={() => setEditOpen(false)} size="xl">
+        <p className="-mt-2 mb-3 text-xs text-ink-muted">
+          Warung tidak bisa diubah di sini — buat pesanan baru bila warung salah. Edit hanya tersedia sebelum picking
+          dikonfirmasi admin.
+        </p>
+
+        <form onSubmit={handleEditSubmit} className="space-y-4">
+          {editFormError && <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{editFormError}</p>}
+
+          <TextField
+            label="Tanggal Pengiriman"
+            type="date"
+            value={editDeliveryDate}
+            onChange={setEditDeliveryDate}
+            error={editErrors.delivery_date}
+            required
+          />
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-ink">Produk Pesanan</span>
+              <button type="button" onClick={addEditItemRow} className="flex items-center gap-1 text-sm font-medium text-forest-700 hover:underline">
+                <Plus size={14} /> Tambah Produk
+              </button>
+            </div>
+
+            {editRowsWithPrice.map((row, index) => (
+              <div key={index} className="flex items-end gap-2 rounded-md border border-border p-2.5">
+                <div className="flex-1">
+                  <SelectField
+                    label="Produk"
+                    value={row.product_id}
+                    onChange={(v) => updateEditItemRow(index, { product_id: v })}
+                    required
+                    options={products.map((p) => ({ value: p.id, label: `${p.name} — ${formatPrice(p.price)}` }))}
+                  />
+                </div>
+                <div className="w-24">
+                  <TextField label="Jumlah" type="number" value={row.quantity} onChange={(v) => updateEditItemRow(index, { quantity: v })} required />
+                </div>
+                <div className="w-28 pb-2 text-right text-sm text-ink-muted">{formatPrice(row.subtotal)}</div>
+                {editItems.length > 1 && (
+                  <button type="button" onClick={() => removeEditItemRow(index)} className="mb-2 text-ink-muted hover:text-danger" aria-label="Hapus produk">
+                    <Trash2 size={16} />
+                  </button>
+                )}
+              </div>
+            ))}
+            {editErrors.items && <p className="text-xs text-danger">{editErrors.items}</p>}
+          </div>
+
+          <div className="flex items-center justify-between border-t border-border pt-3">
+            <span className="text-sm font-medium text-ink">Total Pesanan</span>
+            <span className="text-base font-semibold text-ink">{formatPrice(editTotal)}</span>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <button type="button" onClick={() => setEditOpen(false)} className="rounded-md px-4 py-2 text-sm font-medium text-ink-muted hover:bg-surface-page">
+              Batal
+            </button>
+            <button type="submit" disabled={editSubmitting} className="rounded-md bg-forest-700 px-4 py-2 text-sm font-medium text-white hover:bg-forest-600 disabled:opacity-50">
+              {editSubmitting ? "Menyimpan..." : "Simpan Perubahan"}
             </button>
           </div>
         </form>

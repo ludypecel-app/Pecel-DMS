@@ -1,6 +1,6 @@
 import "server-only";
 import { SheetsRepository } from "@/lib/google-sheets/sheets-repository";
-import { ORDER_TABLE, ORDER_DETAIL_TABLE, PRODUCT_TABLE, WARUNG_TABLE } from "@/lib/google-sheets/tables";
+import { ORDER_TABLE, ORDER_DETAIL_TABLE, PRODUCT_TABLE, WARUNG_TABLE, ASSIGNMENT_TABLE } from "@/lib/google-sheets/tables";
 import { generateSequentialId } from "@/lib/utils/id";
 import {
   createOrderSchema,
@@ -9,17 +9,25 @@ import {
   type CreateOrderInput,
   type UpdateOrderInput,
 } from "../validations/order.schema";
-import type { Order, OrderDetail, Product, Warung, OrderStatus } from "@/types/entities";
+import type { Order, OrderDetail, Product, Warung, Assignment, OrderStatus } from "@/types/entities";
 import type { OrderWithDetails } from "../types/order.types";
 
 const orderRepo = new SheetsRepository<Order>(ORDER_TABLE);
 const orderDetailRepo = new SheetsRepository<OrderDetail>(ORDER_DETAIL_TABLE);
 const productRepo = new SheetsRepository<Product>(PRODUCT_TABLE);
 const warungRepo = new SheetsRepository<Warung>(WARUNG_TABLE);
+const assignmentRepo = new SheetsRepository<Assignment>(ASSIGNMENT_TABLE);
 
 // Status yang TIDAK BOLEH dibatalkan lagi (setelah barang sampai di lokasi).
 // "on_delivery" ditangani sebagai kasus khusus terpisah di cancel() di bawah.
 const NOT_CANCELLABLE: OrderStatus[] = ["arrived", "visited", "completed", "cancelled"];
+
+// Edit detail pesanan (tanggal kirim & daftar produk) diizinkan selama belum
+// ada stok yang bergerak — yaitu sebelum picking dikonfirmasi admin
+// (confirmPicking di assignment.service.ts). Setelah itu, StockTransaction
+// "picking_out" sudah tercatat berdasarkan detail lama, jadi mengubah detail
+// pesanan akan membuat data stok lapangan tidak konsisten.
+const ORDER_EDITABLE_STATUSES: OrderStatus[] = ["scheduling", "assigned", "ready_to_picking"];
 
 function computeSubtotal(quantity: number, unitPrice: number) {
   return quantity * unitPrice;
@@ -129,16 +137,16 @@ export const orderService = {
   },
 
   /**
-   * Edit pesanan HANYA diperbolehkan selama status masih "scheduling"
-   * (sebelum ditugaskan ke sales) — sesuai aturan bisnis Tahap 3.
-   * Warung tidak bisa diubah lewat sini.
+   * Edit pesanan diperbolehkan selama status masih Scheduling, Assigned,
+   * atau Ready To Picking — yaitu sebelum picking dikonfirmasi admin (belum
+   * ada stok yang bergerak secara fisik). Warung tidak bisa diubah lewat sini.
    */
   async update(id: string, input: unknown): Promise<OrderWithDetails> {
     const order = await orderRepo.findById(id);
     if (!order) throw new Error("Pesanan tidak ditemukan");
-    if (order.status !== "scheduling") {
+    if (!ORDER_EDITABLE_STATUSES.includes(order.status)) {
       throw new Error(
-        "Pesanan hanya dapat diedit selama berstatus Scheduling. Gunakan proses Penugasan untuk mengubah detail setelah pesanan ditugaskan."
+        "Pesanan hanya dapat diedit selama berstatus Scheduling, Assigned, atau Ready To Picking. Setelah picking dikonfirmasi, detail pesanan tidak bisa diubah lagi."
       );
     }
 
@@ -146,6 +154,18 @@ export const orderService = {
 
     if (data.delivery_date) {
       await orderRepo.update(id, { delivery_date: data.delivery_date } as Partial<Order>);
+
+      // Pesanan yang sudah ditugaskan (Assigned/Ready To Picking) juga
+      // punya tanggal pengiriman sendiri di record Assignment (dipakai
+      // Dashboard/Kanban sales) — selaraskan supaya tidak jadi basi begitu
+      // admin mengubah tanggal kirim dari sini.
+      if (order.status !== "scheduling") {
+        const relatedAssignments = await assignmentRepo.findAll({ order_id: id } as Partial<Assignment>);
+        const activeAssignment = relatedAssignments.find((a) => a.status === order.status);
+        if (activeAssignment) {
+          await assignmentRepo.update(activeAssignment.id, { delivery_date: data.delivery_date } as Partial<Assignment>);
+        }
+      }
     }
 
     if (data.items) {
@@ -164,7 +184,7 @@ export const orderService = {
         })
       );
 
-      // Edit hanya diizinkan saat "scheduling" (belum ada picking/stok
+      // Edit hanya diizinkan sebelum picking dikonfirmasi (belum ada stok
       // bergerak), sehingga aman mengganti total daftar produk pesanan:
       // hapus detail lama, buat detail baru dari input.
       const oldDetails = await orderDetailRepo.findAll({ order_id: id } as Partial<OrderDetail>);
