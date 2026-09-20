@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Download } from "lucide-react";
 import { useActiveSales } from "@/features/sales/hooks/useActiveSales";
+import { useActiveRegions } from "@/features/regions/hooks/useActiveRegions";
 
 interface PaymentRow {
   paymentId: string;
@@ -21,6 +22,49 @@ interface VisitRow {
   checkedInAt?: string;
   checkedOutAt?: string;
   status: string;
+}
+
+interface RegionSummaryRow {
+  regionId: string;
+  regionName: string;
+  warungCount: number;
+  salesCount: number;
+  totalOrders: number;
+  totalOmzet: number;
+}
+
+interface RegionWarungRow {
+  warungId: string;
+  warungName: string;
+  address: string;
+  status: string;
+  totalOrders: number;
+  totalOmzet: number;
+  lastOrderDate?: string;
+}
+
+interface RegionSalesRow {
+  salesId: string;
+  salesName: string;
+  status: string;
+  totalAssignments: number;
+  completedAssignments: number;
+  cancelledAssignments: number;
+  activeAssignments: number;
+  completionRate: number;
+  totalVisits: number;
+  totalOmzet: number;
+}
+
+interface RegionDetail {
+  regionId: string;
+  regionName: string;
+  warungCount: number;
+  salesCount: number;
+  totalOrders: number;
+  totalOmzet: number;
+  warungs: RegionWarungRow[];
+  salesPerformance: RegionSalesRow[];
 }
 
 const PAYMENT_STATUS_LABEL: Record<string, string> = {
@@ -47,13 +91,20 @@ function downloadCsv(filename: string, content: string) {
 
 export default function ReportsPage() {
   const salesList = useActiveSales();
-  const [tab, setTab] = useState<"payments" | "visits">("payments");
+  const regions = useActiveRegions();
+  const [tab, setTab] = useState<"payments" | "visits" | "regions">("payments");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [salesFilter, setSalesFilter] = useState("");
   const [payments, setPayments] = useState<PaymentRow[]>([]);
   const [visits, setVisits] = useState<VisitRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // --- Laporan Per Wilayah ---
+  const [regionFilter, setRegionFilter] = useState("");
+  const [regionSummaries, setRegionSummaries] = useState<RegionSummaryRow[]>([]);
+  const [regionDetail, setRegionDetail] = useState<RegionDetail | null>(null);
+  const [regionLoading, setRegionLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
@@ -65,7 +116,7 @@ export default function ReportsPage() {
       const res = await fetch(`/api/reports/payments?${params.toString()}`);
       const json = await res.json();
       setPayments(json.data ?? []);
-    } else {
+    } else if (tab === "visits") {
       if (salesFilter) params.set("salesId", salesFilter);
       const res = await fetch(`/api/reports/visits?${params.toString()}`);
       const json = await res.json();
@@ -75,8 +126,27 @@ export default function ReportsPage() {
   }, [tab, from, to, salesFilter]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    if (tab !== "regions") fetchData();
+  }, [tab, fetchData]);
+
+  const fetchRegionReport = useCallback(async () => {
+    setRegionLoading(true);
+    const params = new URLSearchParams();
+    if (regionFilter) params.set("regionId", regionFilter);
+    const res = await fetch(`/api/reports/regions?${params.toString()}`);
+    const json = await res.json();
+    if (regionFilter) {
+      setRegionDetail(json.data ?? null);
+    } else {
+      setRegionSummaries(json.data?.summaries ?? []);
+      setRegionDetail(null);
+    }
+    setRegionLoading(false);
+  }, [regionFilter]);
+
+  useEffect(() => {
+    if (tab === "regions") fetchRegionReport();
+  }, [tab, fetchRegionReport]);
 
   const formatPrice = (n: number) =>
     new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(n);
@@ -107,13 +177,15 @@ export default function ReportsPage() {
           <h1 className="h1 !text-[20px]">Laporan</h1>
           <p className="text-sm text-ink-muted">Laporan pembayaran & monitoring kunjungan sales</p>
         </div>
-        <button
-          type="button"
-          onClick={handleExport}
-          className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm font-medium text-ink hover:bg-surface-page"
-        >
-          <Download size={15} /> Export CSV
-        </button>
+        {tab !== "regions" && (
+          <button
+            type="button"
+            onClick={handleExport}
+            className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm font-medium text-ink hover:bg-surface-page"
+          >
+            <Download size={15} /> Export CSV
+          </button>
+        )}
       </div>
 
       <div className="flex gap-1 border-b border-border">
@@ -131,23 +203,168 @@ export default function ReportsPage() {
         >
           Monitoring Kunjungan
         </button>
+        <button
+          type="button"
+          onClick={() => setTab("regions")}
+          className={`px-3 py-2 text-sm font-medium ${tab === "regions" ? "border-b-2 border-forest-700 text-forest-700" : "text-ink-muted"}`}
+        >
+          Per Wilayah
+        </button>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="rounded-md border border-border px-3 py-2 text-sm" />
-        <span className="self-center text-sm text-ink-muted">s/d</span>
-        <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="rounded-md border border-border px-3 py-2 text-sm" />
-        {tab === "visits" && (
-          <select value={salesFilter} onChange={(e) => setSalesFilter(e.target.value)} className="rounded-md border border-border bg-white px-3 py-2 text-sm">
-            <option value="">Semua Sales</option>
-            {salesList.map((s) => (
-              <option key={s.id} value={s.id}>{s.name}</option>
-            ))}
-          </select>
-        )}
-      </div>
+      {tab !== "regions" && (
+        <div className="flex flex-wrap gap-2">
+          <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="rounded-md border border-border px-3 py-2 text-sm" />
+          <span className="self-center text-sm text-ink-muted">s/d</span>
+          <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="rounded-md border border-border px-3 py-2 text-sm" />
+          {tab === "visits" && (
+            <select value={salesFilter} onChange={(e) => setSalesFilter(e.target.value)} className="rounded-md border border-border bg-white px-3 py-2 text-sm">
+              <option value="">Semua Sales</option>
+              {salesList.map((s) => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
+          )}
+        </div>
+      )}
 
-      {isLoading ? (
+      {tab === "regions" && (
+        <select
+          value={regionFilter}
+          onChange={(e) => setRegionFilter(e.target.value)}
+          className="w-full rounded-md border border-border bg-white px-3 py-2 text-sm sm:w-72"
+        >
+          <option value="">Semua Wilayah (ringkasan)</option>
+          {regions.map((r) => (
+            <option key={r.id} value={r.id}>{r.name}</option>
+          ))}
+        </select>
+      )}
+
+      {tab === "regions" ? (
+        regionLoading ? (
+          <p className="text-sm text-ink-muted">Memuat...</p>
+        ) : !regionFilter ? (
+          <div className="overflow-x-auto rounded-lg border border-border bg-surface-raised">
+            <table className="w-full text-left text-sm">
+              <thead className="border-b border-border bg-surface-page text-ink-muted">
+                <tr>
+                  <th className="px-4 py-2.5 font-medium">Wilayah</th>
+                  <th className="px-4 py-2.5 font-medium">Warung</th>
+                  <th className="px-4 py-2.5 font-medium">Sales</th>
+                  <th className="px-4 py-2.5 font-medium">Total Pesanan</th>
+                  <th className="px-4 py-2.5 font-medium">Total Nilai</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {regionSummaries.length === 0 && (
+                  <tr><td colSpan={5} className="px-4 py-6 text-center text-ink-muted">Belum ada data wilayah.</td></tr>
+                )}
+                {regionSummaries.map((r) => (
+                  <tr key={r.regionId} className="cursor-pointer hover:bg-surface-page" onClick={() => setRegionFilter(r.regionId)}>
+                    <td className="px-4 py-2 font-medium text-forest-700">{r.regionName}</td>
+                    <td className="px-4 py-2">{r.warungCount}</td>
+                    <td className="px-4 py-2">{r.salesCount}</td>
+                    <td className="px-4 py-2">{r.totalOrders}</td>
+                    <td className="px-4 py-2">{formatPrice(r.totalOmzet)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : regionDetail ? (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <div className="rounded-lg border border-border bg-surface-raised p-3">
+                <p className="text-xs text-ink-muted">Warung</p>
+                <p className="text-lg font-semibold text-ink">{regionDetail.warungCount}</p>
+              </div>
+              <div className="rounded-lg border border-border bg-surface-raised p-3">
+                <p className="text-xs text-ink-muted">Sales</p>
+                <p className="text-lg font-semibold text-ink">{regionDetail.salesCount}</p>
+              </div>
+              <div className="rounded-lg border border-border bg-surface-raised p-3">
+                <p className="text-xs text-ink-muted">Total Pesanan</p>
+                <p className="text-lg font-semibold text-ink">{regionDetail.totalOrders}</p>
+              </div>
+              <div className="rounded-lg border border-border bg-surface-raised p-3">
+                <p className="text-xs text-ink-muted">Total Nilai</p>
+                <p className="text-lg font-semibold text-forest-700">{formatPrice(regionDetail.totalOmzet)}</p>
+              </div>
+            </div>
+
+            <div>
+              <h2 className="mb-2 text-sm font-semibold text-ink">Warung di {regionDetail.regionName}</h2>
+              <div className="overflow-x-auto rounded-lg border border-border bg-surface-raised">
+                <table className="w-full text-left text-sm">
+                  <thead className="border-b border-border bg-surface-page text-ink-muted">
+                    <tr>
+                      <th className="px-4 py-2.5 font-medium">Warung</th>
+                      <th className="px-4 py-2.5 font-medium">Alamat</th>
+                      <th className="px-4 py-2.5 font-medium">Pesanan</th>
+                      <th className="px-4 py-2.5 font-medium">Total Nilai</th>
+                      <th className="px-4 py-2.5 font-medium">Pesanan Terakhir</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {regionDetail.warungs.length === 0 && (
+                      <tr><td colSpan={5} className="px-4 py-6 text-center text-ink-muted">Belum ada warung di wilayah ini.</td></tr>
+                    )}
+                    {regionDetail.warungs.map((w) => (
+                      <tr key={w.warungId}>
+                        <td className="px-4 py-2 font-medium text-ink">{w.warungName}</td>
+                        <td className="px-4 py-2 text-ink-muted">{w.address}</td>
+                        <td className="px-4 py-2">{w.totalOrders}</td>
+                        <td className="px-4 py-2">{formatPrice(w.totalOmzet)}</td>
+                        <td className="px-4 py-2">{w.lastOrderDate ?? "-"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div>
+              <h2 className="mb-2 text-sm font-semibold text-ink">Kinerja Sales di {regionDetail.regionName}</h2>
+              <div className="overflow-x-auto rounded-lg border border-border bg-surface-raised">
+                <table className="w-full text-left text-sm">
+                  <thead className="border-b border-border bg-surface-page text-ink-muted">
+                    <tr>
+                      <th className="px-4 py-2.5 font-medium">Sales</th>
+                      <th className="px-4 py-2.5 font-medium">Total Tugas</th>
+                      <th className="px-4 py-2.5 font-medium">Selesai</th>
+                      <th className="px-4 py-2.5 font-medium">Berjalan</th>
+                      <th className="px-4 py-2.5 font-medium">Dibatalkan</th>
+                      <th className="px-4 py-2.5 font-medium">Tingkat Selesai</th>
+                      <th className="px-4 py-2.5 font-medium">Kunjungan</th>
+                      <th className="px-4 py-2.5 font-medium">Total Nilai</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {regionDetail.salesPerformance.length === 0 && (
+                      <tr><td colSpan={8} className="px-4 py-6 text-center text-ink-muted">Belum ada sales yang ditugaskan di wilayah ini.</td></tr>
+                    )}
+                    {regionDetail.salesPerformance.map((s) => (
+                      <tr key={s.salesId}>
+                        <td className="px-4 py-2 font-medium text-ink">{s.salesName}</td>
+                        <td className="px-4 py-2">{s.totalAssignments}</td>
+                        <td className="px-4 py-2">{s.completedAssignments}</td>
+                        <td className="px-4 py-2">{s.activeAssignments}</td>
+                        <td className="px-4 py-2">{s.cancelledAssignments}</td>
+                        <td className="px-4 py-2">{s.completionRate}%</td>
+                        <td className="px-4 py-2">{s.totalVisits}</td>
+                        <td className="px-4 py-2">{formatPrice(s.totalOmzet)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-danger">Gagal memuat data wilayah.</p>
+        )
+      ) : isLoading ? (
         <p className="text-sm text-ink-muted">Memuat...</p>
       ) : tab === "payments" ? (
         <div className="space-y-2">

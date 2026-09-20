@@ -9,6 +9,16 @@ export interface AdminDashboardData {
   lateOrders: number;
   salesSummaryToday: number; // total Rp dari Payment hari ini
   stockSummary: { productId: string; productName: string; outstanding: number }[]; // stok yang masih di tangan sales (belum completed)
+  regionPerformance: { regionId: string; regionName: string; totalOrders: number; totalOmzet: number }[]; // top 5 wilayah by nilai pesanan
+  warungPerformance: { warungId: string; warungName: string; totalOrders: number; totalOmzet: number }[]; // top 5 warung by nilai pesanan
+  salesPerformance: {
+    salesId: string;
+    salesName: string;
+    totalAssignments: number;
+    completedAssignments: number;
+    completionRate: number;
+    totalOmzet: number;
+  }[]; // top 5 sales by nilai pesanan yang ditangani
 }
 
 export interface SalesDashboardData {

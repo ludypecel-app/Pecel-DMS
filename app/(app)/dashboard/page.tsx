@@ -93,6 +93,73 @@ export default function DashboardPage() {
             )}
           </div>
 
+          <div className="grid gap-4 lg:grid-cols-3">
+            <div className="rounded-lg border border-border bg-surface-raised p-4">
+              <h2 className="mb-1 text-sm font-semibold text-ink">Performa Sales</h2>
+              <p className="mb-3 text-xs text-ink-muted">Top 5 berdasarkan nilai pesanan yang ditangani</p>
+              {adminData.salesPerformance.length === 0 ? (
+                <p className="text-sm text-ink-muted">Belum ada data.</p>
+              ) : (
+                <div className="space-y-3">
+                  {adminData.salesPerformance.map((s) => (
+                    <div key={s.salesId} className="text-sm">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-ink">{s.salesName}</span>
+                        <span className="text-ink-muted">{formatPrice(s.totalOmzet)}</span>
+                      </div>
+                      <p className="text-xs text-ink-muted">
+                        {s.completedAssignments}/{s.totalAssignments} tugas selesai ({s.completionRate}%)
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-lg border border-border bg-surface-raised p-4">
+              <h2 className="mb-1 text-sm font-semibold text-ink">Performa Wilayah</h2>
+              <p className="mb-3 text-xs text-ink-muted">Top 5 berdasarkan nilai pesanan</p>
+              {adminData.regionPerformance.length === 0 ? (
+                <p className="text-sm text-ink-muted">Belum ada data.</p>
+              ) : (
+                <div className="space-y-2">
+                  {adminData.regionPerformance.map((r) => (
+                    <div key={r.regionId} className="flex items-center justify-between text-sm">
+                      <span className="text-ink">{r.regionName}</span>
+                      <div className="text-right">
+                        <p className="font-medium text-ink">{formatPrice(r.totalOmzet)}</p>
+                        <p className="text-xs text-ink-muted">{r.totalOrders} pesanan</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <Link href="/reports" className="mt-3 inline-block text-xs font-medium text-forest-700 hover:underline">
+                Lihat laporan per wilayah →
+              </Link>
+            </div>
+
+            <div className="rounded-lg border border-border bg-surface-raised p-4">
+              <h2 className="mb-1 text-sm font-semibold text-ink">Performa Warung</h2>
+              <p className="mb-3 text-xs text-ink-muted">Top 5 berdasarkan nilai pesanan</p>
+              {adminData.warungPerformance.length === 0 ? (
+                <p className="text-sm text-ink-muted">Belum ada data.</p>
+              ) : (
+                <div className="space-y-2">
+                  {adminData.warungPerformance.map((w) => (
+                    <div key={w.warungId} className="flex items-center justify-between text-sm">
+                      <span className="text-ink">{w.warungName}</span>
+                      <div className="text-right">
+                        <p className="font-medium text-ink">{formatPrice(w.totalOmzet)}</p>
+                        <p className="text-xs text-ink-muted">{w.totalOrders} pesanan</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
           <Link href="/assignments/kanban" className="inline-block text-sm font-medium text-forest-700 hover:underline">
             Lihat Kanban Penugasan →
           </Link>

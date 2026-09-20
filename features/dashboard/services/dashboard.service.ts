@@ -9,6 +9,8 @@ import {
   VISIT_TABLE,
   PRODUCT_TABLE,
   SALES_TABLE,
+  REGION_TABLE,
+  WARUNG_TABLE,
 } from "@/lib/google-sheets/tables";
 import type {
   Order,
@@ -19,6 +21,8 @@ import type {
   Visit,
   Product,
   Sales,
+  Region,
+  Warung,
   OrderStatus,
 } from "@/types/entities";
 import type { AdminDashboardData, SalesDashboardData } from "../types/dashboard.types";
@@ -31,6 +35,8 @@ const stockTxRepo = new SheetsRepository<StockTransaction>(STOCK_TRANSACTION_TAB
 const visitRepo = new SheetsRepository<Visit>(VISIT_TABLE);
 const productRepo = new SheetsRepository<Product>(PRODUCT_TABLE);
 const salesRepo = new SheetsRepository<Sales>(SALES_TABLE);
+const regionRepo = new SheetsRepository<Region>(REGION_TABLE);
+const warungRepo = new SheetsRepository<Warung>(WARUNG_TABLE);
 
 function today() {
   return new Date().toISOString().slice(0, 10);
@@ -49,14 +55,19 @@ const NOT_DONE: OrderStatus[] = ["completed", "cancelled"];
 
 export const dashboardService = {
   async getAdminDashboard(): Promise<AdminDashboardData> {
-    const [orders, assignments, payments, stockTx, visits, products] = await Promise.all([
-      orderRepo.findAll(),
-      assignmentRepo.findAll(),
-      paymentRepo.findAll(),
-      stockTxRepo.findAll(),
-      visitRepo.findAll(),
-      productRepo.findAll(),
-    ]);
+    const [orders, orderDetails, assignments, payments, stockTx, visits, products, salesList, regions, warungs] =
+      await Promise.all([
+        orderRepo.findAll(),
+        orderDetailRepo.findAll(),
+        assignmentRepo.findAll(),
+        paymentRepo.findAll(),
+        stockTxRepo.findAll(),
+        visitRepo.findAll(),
+        productRepo.findAll(),
+        salesRepo.findAll(),
+        regionRepo.findAll(),
+        warungRepo.findAll(),
+      ]);
 
     const todayStr = today();
 
@@ -104,6 +115,62 @@ export const dashboardService = {
       .sort((a, b) => b.outstanding - a.outstanding)
       .slice(0, 10);
 
+    // Nilai pesanan per order (jumlah subtotal seluruh item) — dipakai untuk
+    // menghitung performa wilayah, warung, & sales di bawah.
+    const orderTotal = new Map<string, number>();
+    orderDetails.forEach((d) => {
+      orderTotal.set(d.order_id, (orderTotal.get(d.order_id) ?? 0) + d.subtotal);
+    });
+    const orderMap = new Map(orders.map((o) => [o.id, o]));
+
+    const regionPerformance = regions
+      .map((r) => {
+        const regionOrders = orders.filter((o) => o.region_id === r.id);
+        return {
+          regionId: r.id,
+          regionName: r.name,
+          totalOrders: regionOrders.length,
+          totalOmzet: regionOrders.reduce((sum, o) => sum + (orderTotal.get(o.id) ?? 0), 0),
+        };
+      })
+      .sort((a, b) => b.totalOmzet - a.totalOmzet)
+      .slice(0, 5);
+
+    const warungPerformance = warungs
+      .map((w) => {
+        const warungOrders = orders.filter((o) => o.warung_id === w.id);
+        return {
+          warungId: w.id,
+          warungName: w.name,
+          totalOrders: warungOrders.length,
+          totalOmzet: warungOrders.reduce((sum, o) => sum + (orderTotal.get(o.id) ?? 0), 0),
+        };
+      })
+      .filter((w) => w.totalOrders > 0)
+      .sort((a, b) => b.totalOmzet - a.totalOmzet)
+      .slice(0, 5);
+
+    const salesPerformance = salesList
+      .map((s) => {
+        const salesAssignments = assignments.filter((a) => a.sales_id === s.id);
+        const completedAssignments = salesAssignments.filter((a) => a.status === "completed").length;
+        const totalOmzet = salesAssignments.reduce((sum, a) => {
+          const order = orderMap.get(a.order_id);
+          return sum + (order ? orderTotal.get(order.id) ?? 0 : 0);
+        }, 0);
+        return {
+          salesId: s.id,
+          salesName: s.name,
+          totalAssignments: salesAssignments.length,
+          completedAssignments,
+          completionRate: salesAssignments.length > 0 ? Math.round((completedAssignments / salesAssignments.length) * 100) : 0,
+          totalOmzet,
+        };
+      })
+      .filter((s) => s.totalAssignments > 0)
+      .sort((a, b) => b.totalOmzet - a.totalOmzet)
+      .slice(0, 5);
+
     return {
       totalOrdersToday,
       ordersScheduling,
@@ -115,6 +182,9 @@ export const dashboardService = {
       lateOrders,
       salesSummaryToday,
       stockSummary,
+      regionPerformance,
+      warungPerformance,
+      salesPerformance,
     };
   },
 
