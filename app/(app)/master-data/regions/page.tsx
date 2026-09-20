@@ -7,6 +7,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Modal } from "@/components/ui/Modal";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { TextField } from "@/components/forms/fields";
+import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import type { Region } from "@/types/entities";
 
 type StatusFilter = "" | "active" | "inactive";
@@ -27,23 +28,30 @@ export default function RegionsPage() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const fetchRegions = useCallback(async () => {
-    setIsLoading(true);
-    const params = new URLSearchParams();
-    if (search) params.set("search", search);
-    if (statusFilter) params.set("status", statusFilter);
+  const fetchRegions = useCallback(
+    async (opts?: { silent?: boolean }) => {
+      if (!opts?.silent) setIsLoading(true);
+      const params = new URLSearchParams();
+      if (search) params.set("search", search);
+      if (statusFilter) params.set("status", statusFilter);
 
-    const res = await fetch(`/api/master-data/regions?${params.toString()}`);
-    const json = await res.json();
-    setRegions(json.data ?? []);
-    setIsLoading(false);
-  }, [search, statusFilter]);
+      const res = await fetch(`/api/master-data/regions?${params.toString()}`);
+      const json = await res.json();
+      setRegions(json.data ?? []);
+      if (!opts?.silent) setIsLoading(false);
+    },
+    [search, statusFilter]
+  );
 
   useEffect(() => {
     // Debounce ringan supaya tidak fetch di setiap ketikan.
-    const timeout = setTimeout(fetchRegions, 300);
+    const timeout = setTimeout(() => fetchRegions(), 300);
     return () => clearTimeout(timeout);
   }, [fetchRegions]);
+
+  // Perubahan yang dibuat admin lain (tambah/edit/nonaktifkan wilayah) ikut
+  // muncul otomatis tanpa refresh manual.
+  useAutoRefresh(() => fetchRegions({ silent: true }), 15000);
 
   function openCreateModal() {
     setEditing(null);

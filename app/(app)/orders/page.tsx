@@ -7,6 +7,7 @@ import { Plus, Search, Trash2 } from "lucide-react";
 import { DataTable, type Column } from "@/components/tables/DataTable";
 import { Modal } from "@/components/ui/Modal";
 import { SelectField, TextField } from "@/components/forms/fields";
+import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import { useActiveRegions } from "@/features/regions/hooks/useActiveRegions";
 import { useActiveWarungs } from "@/features/warungs/hooks/useActiveWarungs";
 import { useActiveProducts } from "@/features/products/hooks/useActiveProducts";
@@ -55,22 +56,30 @@ function OrdersPageContent() {
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
 
-  const fetchOrders = useCallback(async () => {
-    setIsLoading(true);
-    const params = new URLSearchParams();
-    if (search) params.set("search", search);
-    if (statusFilter) params.set("status", statusFilter);
-    if (regionFilter) params.set("regionId", regionFilter);
-    const res = await fetch(`/api/orders?${params.toString()}`);
-    const json = await res.json();
-    setOrders(json.data ?? []);
-    setIsLoading(false);
-  }, [search, statusFilter, regionFilter]);
+  const fetchOrders = useCallback(
+    async (opts?: { silent?: boolean }) => {
+      if (!opts?.silent) setIsLoading(true);
+      const params = new URLSearchParams();
+      if (search) params.set("search", search);
+      if (statusFilter) params.set("status", statusFilter);
+      if (regionFilter) params.set("regionId", regionFilter);
+      const res = await fetch(`/api/orders?${params.toString()}`);
+      const json = await res.json();
+      setOrders(json.data ?? []);
+      if (!opts?.silent) setIsLoading(false);
+    },
+    [search, statusFilter, regionFilter]
+  );
 
   useEffect(() => {
-    const timeout = setTimeout(fetchOrders, 300);
+    const timeout = setTimeout(() => fetchOrders(), 300);
     return () => clearTimeout(timeout);
   }, [fetchOrders]);
+
+  // Supaya daftar pesanan ikut terupdate otomatis saat status berubah lewat
+  // aksi user lain (mis. admin menugaskan sales di halaman Penugasan),
+  // tanpa perlu refresh manual.
+  useAutoRefresh(() => fetchOrders({ silent: true }), 8000);
 
   // Tombol "+" mengambang di bottom tab bar (mobile) navigasi ke
   // "/orders?new=1" karena ia komponen layout global, bukan bagian dari

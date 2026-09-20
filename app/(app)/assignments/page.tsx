@@ -7,6 +7,7 @@ import { LayoutGrid } from "lucide-react";
 import { DataTable, type Column } from "@/components/tables/DataTable";
 import { Modal } from "@/components/ui/Modal";
 import { SelectField, TextField } from "@/components/forms/fields";
+import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import { useActiveSales } from "@/features/sales/hooks/useActiveSales";
 import { useActiveProducts } from "@/features/products/hooks/useActiveProducts";
 import { ORDER_STATUS_LABEL, ORDER_STATUS_COLOR } from "@/features/orders/constants";
@@ -35,8 +36,8 @@ export default function AssignmentsPage() {
   const [pickingQty, setPickingQty] = useState<Record<string, string>>({});
   const [pickingSubmitting, setPickingSubmitting] = useState(false);
 
-  const fetchData = useCallback(async () => {
-    setIsLoading(true);
+  const fetchData = useCallback(async (opts?: { silent?: boolean }) => {
+    if (!opts?.silent) setIsLoading(true);
     const [ordersRes, assignmentsRes] = await Promise.all([
       fetch("/api/orders?status=scheduling"),
       fetch("/api/assignments"),
@@ -45,12 +46,17 @@ export default function AssignmentsPage() {
     const assignmentsJson = await assignmentsRes.json();
     setSchedulingOrders(ordersJson.data ?? []);
     setAssignments(assignmentsJson.data ?? []);
-    setIsLoading(false);
+    if (!opts?.silent) setIsLoading(false);
   }, []);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Supaya status penugasan (diterima/ditolak/check-in/dst. oleh sales, atau
+  // penugasan baru oleh admin) langsung terlihat oleh user lain tanpa
+  // refresh manual.
+  useAutoRefresh(() => fetchData({ silent: true }), 8000);
 
   function openAssignModal(order: OrderWithDetails) {
     setAssignModalOrder(order);

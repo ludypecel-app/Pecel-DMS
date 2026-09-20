@@ -8,6 +8,7 @@ import { useActiveRegions } from "@/features/regions/hooks/useActiveRegions";
 import { useActiveWarungs } from "@/features/warungs/hooks/useActiveWarungs";
 import { ORDER_STATUS_LABEL, ORDER_STATUS_COLOR } from "@/features/orders/constants";
 import { Modal } from "@/components/ui/Modal";
+import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import type { OrderWithDetails } from "@/features/orders/types/order.types";
 
 const NOT_CANCELLABLE = ["arrived", "visited", "completed", "cancelled"];
@@ -25,19 +26,26 @@ export default function OrderDetailPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  const fetchOrder = useCallback(async () => {
-    setIsLoading(true);
-    const res = await fetch(`/api/orders/${id}`);
-    if (res.ok) {
-      const json = await res.json();
-      setOrder(json.data);
-    }
-    setIsLoading(false);
-  }, [id]);
+  const fetchOrder = useCallback(
+    async (opts?: { silent?: boolean }) => {
+      if (!opts?.silent) setIsLoading(true);
+      const res = await fetch(`/api/orders/${id}`);
+      if (res.ok) {
+        const json = await res.json();
+        setOrder(json.data);
+      }
+      if (!opts?.silent) setIsLoading(false);
+    },
+    [id]
+  );
 
   useEffect(() => {
     fetchOrder();
   }, [fetchOrder]);
+
+  // Status pesanan (mis. saat ditugaskan/dibatalkan/diproses sales) ikut
+  // terupdate otomatis di halaman detail tanpa refresh manual.
+  useAutoRefresh(() => fetchOrder({ silent: true }), 8000);
 
   const formatPrice = (n: number) =>
     new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(n);

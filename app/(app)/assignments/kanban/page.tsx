@@ -7,6 +7,7 @@ import { useActiveRegions } from "@/features/regions/hooks/useActiveRegions";
 import { useActiveSales } from "@/features/sales/hooks/useActiveSales";
 import { useActiveWarungs } from "@/features/warungs/hooks/useActiveWarungs";
 import { useActiveProducts } from "@/features/products/hooks/useActiveProducts";
+import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import { ORDER_STATUS_LABEL, ORDER_STATUS_COLOR } from "@/features/orders/constants";
 import { Modal } from "@/components/ui/Modal";
 import { TextField } from "@/components/forms/fields";
@@ -57,8 +58,8 @@ export default function AssignmentsKanbanPage() {
   const [cancelReason, setCancelReason] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const fetchData = useCallback(async () => {
-    setIsLoading(true);
+  const fetchData = useCallback(async (opts?: { silent?: boolean }) => {
+    if (!opts?.silent) setIsLoading(true);
     const [ordersRes, assignmentsRes] = await Promise.all([
       fetch("/api/orders"),
       fetch("/api/assignments"),
@@ -67,12 +68,20 @@ export default function AssignmentsKanbanPage() {
     const assignmentsJson = await assignmentsRes.json();
     setOrders(ordersJson.data ?? []);
     setAssignments(assignmentsJson.data ?? []);
-    setIsLoading(false);
+    if (!opts?.silent) setIsLoading(false);
   }, []);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Kartu Kanban ikut bergeser kolom otomatis saat status berubah lewat
+  // aksi sales (terima/mulai kirim/check-in/dst.) atau admin lain, tanpa
+  // perlu refresh manual. Dijeda otomatis saat sedang drag kartu supaya
+  // tidak mengganggu interaksi yang berjalan.
+  useAutoRefresh(() => {
+    if (!dragCard) fetchData({ silent: true });
+  }, 8000);
 
   const cards: CardData[] = useMemo(() => {
     return orders

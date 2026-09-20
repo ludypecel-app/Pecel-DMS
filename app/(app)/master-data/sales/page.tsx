@@ -7,6 +7,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Modal } from "@/components/ui/Modal";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { TextField, SelectField } from "@/components/forms/fields";
+import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import { useActiveRegions } from "@/features/regions/hooks/useActiveRegions";
 import type { Sales, Region } from "@/types/entities";
 
@@ -33,22 +34,27 @@ export default function SalesPage() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const fetchItems = useCallback(async () => {
-    setIsLoading(true);
-    const params = new URLSearchParams();
-    if (search) params.set("search", search);
-    if (statusFilter) params.set("status", statusFilter);
-    if (regionFilter) params.set("regionId", regionFilter);
-    const res = await fetch(`/api/master-data/sales?${params.toString()}`);
-    const json = await res.json();
-    setItems(json.data ?? []);
-    setIsLoading(false);
-  }, [search, statusFilter, regionFilter]);
+  const fetchItems = useCallback(
+    async (opts?: { silent?: boolean }) => {
+      if (!opts?.silent) setIsLoading(true);
+      const params = new URLSearchParams();
+      if (search) params.set("search", search);
+      if (statusFilter) params.set("status", statusFilter);
+      if (regionFilter) params.set("regionId", regionFilter);
+      const res = await fetch(`/api/master-data/sales?${params.toString()}`);
+      const json = await res.json();
+      setItems(json.data ?? []);
+      if (!opts?.silent) setIsLoading(false);
+    },
+    [search, statusFilter, regionFilter]
+  );
 
   useEffect(() => {
-    const timeout = setTimeout(fetchItems, 300);
+    const timeout = setTimeout(() => fetchItems(), 300);
     return () => clearTimeout(timeout);
   }, [fetchItems]);
+
+  useAutoRefresh(() => fetchItems({ silent: true }), 15000);
 
   function regionName(id: string) {
     return regions.find((r) => r.id === id)?.name ?? "-";

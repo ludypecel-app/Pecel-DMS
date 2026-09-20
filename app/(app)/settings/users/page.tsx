@@ -7,6 +7,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Modal } from "@/components/ui/Modal";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { TextField, SelectField } from "@/components/forms/fields";
+import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import { useActiveSales } from "@/features/sales/hooks/useActiveSales";
 import type { User } from "@/types/entities";
 
@@ -29,17 +30,19 @@ export default function UsersPage() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const fetchUsers = useCallback(async () => {
-    setIsLoading(true);
+  const fetchUsers = useCallback(async (opts?: { silent?: boolean }) => {
+    if (!opts?.silent) setIsLoading(true);
     const res = await fetch("/api/users");
     const json = await res.json();
     setUsers(json.data ?? []);
-    setIsLoading(false);
+    if (!opts?.silent) setIsLoading(false);
   }, []);
 
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
+
+  useAutoRefresh(() => fetchUsers({ silent: true }), 15000);
 
   function openCreateModal() {
     setEditing(null);

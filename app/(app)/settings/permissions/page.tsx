@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { PERMISSION_KEYS, type PermissionKey } from "@/config/permissions";
+import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 
 const PERMISSION_LABEL: Record<PermissionKey, string> = {
   "orders.view": "Melihat pesanan",
@@ -29,17 +30,23 @@ export default function PermissionsPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  const fetchMapping = useCallback(async () => {
-    setIsLoading(true);
+  const fetchMapping = useCallback(async (opts?: { silent?: boolean }) => {
+    if (!opts?.silent) setIsLoading(true);
     const res = await fetch("/api/permissions");
     const json = await res.json();
     if (res.ok) setMapping(json.data);
-    setIsLoading(false);
+    if (!opts?.silent) setIsLoading(false);
   }, []);
 
   useEffect(() => {
     fetchMapping();
   }, [fetchMapping]);
+
+  // Jangan poll saat sedang menyimpan toggle sendiri supaya tidak menimpa
+  // perubahan yang belum selesai disimpan.
+  useAutoRefresh(() => {
+    if (!saving) fetchMapping({ silent: true });
+  }, 15000);
 
   async function toggle(role: "admin" | "sales", permission: PermissionKey) {
     const current = mapping[role] ?? [];

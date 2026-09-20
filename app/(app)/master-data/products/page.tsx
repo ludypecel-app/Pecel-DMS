@@ -7,6 +7,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Modal } from "@/components/ui/Modal";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { TextField } from "@/components/forms/fields";
+import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import type { Product } from "@/types/entities";
 
 type StatusFilter = "" | "active" | "inactive";
@@ -29,21 +30,26 @@ export default function ProductsPage() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const fetchProducts = useCallback(async () => {
-    setIsLoading(true);
-    const params = new URLSearchParams();
-    if (search) params.set("search", search);
-    if (statusFilter) params.set("status", statusFilter);
-    const res = await fetch(`/api/master-data/products?${params.toString()}`);
-    const json = await res.json();
-    setProducts(json.data ?? []);
-    setIsLoading(false);
-  }, [search, statusFilter]);
+  const fetchProducts = useCallback(
+    async (opts?: { silent?: boolean }) => {
+      if (!opts?.silent) setIsLoading(true);
+      const params = new URLSearchParams();
+      if (search) params.set("search", search);
+      if (statusFilter) params.set("status", statusFilter);
+      const res = await fetch(`/api/master-data/products?${params.toString()}`);
+      const json = await res.json();
+      setProducts(json.data ?? []);
+      if (!opts?.silent) setIsLoading(false);
+    },
+    [search, statusFilter]
+  );
 
   useEffect(() => {
-    const timeout = setTimeout(fetchProducts, 300);
+    const timeout = setTimeout(() => fetchProducts(), 300);
     return () => clearTimeout(timeout);
   }, [fetchProducts]);
+
+  useAutoRefresh(() => fetchProducts({ silent: true }), 15000);
 
   function openCreateModal() {
     setEditing(null);

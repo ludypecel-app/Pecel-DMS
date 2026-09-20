@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ArrowLeft, AlertTriangle } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { TextField } from "@/components/forms/fields";
+import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import type { VisitReviewData } from "@/features/visits/types/visit.types";
 
 const PAYMENT_STATUS_LABEL: Record<string, string> = {
@@ -31,18 +32,25 @@ export default function AssignmentReviewPage() {
   const [reopenModal, setReopenModal] = useState(false);
   const [reopenReason, setReopenReason] = useState("");
 
-  const fetchData = useCallback(async () => {
-    setIsLoading(true);
-    const res = await fetch(`/api/assignments/${id}/review`);
-    const json = await res.json();
-    if (res.ok) setData(json.data);
-    else setError(json.error ?? "Gagal memuat data review");
-    setIsLoading(false);
-  }, [id]);
+  const fetchData = useCallback(
+    async (opts?: { silent?: boolean }) => {
+      if (!opts?.silent) setIsLoading(true);
+      const res = await fetch(`/api/assignments/${id}/review`);
+      const json = await res.json();
+      if (res.ok) setData(json.data);
+      else setError(json.error ?? "Gagal memuat data review");
+      if (!opts?.silent) setIsLoading(false);
+    },
+    [id]
+  );
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Kalau sales baru saja check-out (mengisi data kunjungan) saat halaman
+  // ini terbuka, datanya ikut muncul otomatis tanpa refresh manual.
+  useAutoRefresh(() => fetchData({ silent: true }), 8000);
 
   const formatPrice = (n: number) =>
     new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(n);

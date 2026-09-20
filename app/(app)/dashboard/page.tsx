@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import {
   ClipboardList,
   UserCheck,
@@ -29,7 +30,8 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
+  const fetchDashboard = useCallback((opts?: { silent?: boolean }) => {
+    if (!opts?.silent) setIsLoading(true);
     fetch("/api/dashboard")
       .then(async (res) => {
         const json = await res.json();
@@ -39,8 +41,18 @@ export default function DashboardPage() {
         else setSalesData(json.data);
       })
       .catch((e) => setError(e.message))
-      .finally(() => setIsLoading(false));
+      .finally(() => {
+        if (!opts?.silent) setIsLoading(false);
+      });
   }, []);
+
+  useEffect(() => {
+    fetchDashboard();
+  }, [fetchDashboard]);
+
+  // Ringkasan angka-angka ikut terupdate otomatis mengikuti aksi yang
+  // terjadi di halaman lain (pesanan baru, penugasan, kunjungan, dst.).
+  useAutoRefresh(() => fetchDashboard({ silent: true }), 15000);
 
   const formatPrice = (n: number) =>
     new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(n);
