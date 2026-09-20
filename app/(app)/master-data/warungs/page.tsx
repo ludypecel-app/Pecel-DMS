@@ -247,10 +247,10 @@ export default function WarungsPage() {
             options={regions.map((r) => ({ value: r.id, label: r.name }))}
           />
           <TextField label="Alamat" value={form.address} onChange={(v) => setForm((f) => ({ ...f, address: v }))} error={errors.address} placeholder="mis. Jl. Merdeka No. 10" required />
-          <TextField label="Nomor Telepon (opsional)" type="tel" value={form.phone} onChange={(v) => setForm((f) => ({ ...f, phone: v }))} error={errors.phone} />
+          <TextField label="Nomor Telepon" type="tel" value={form.phone} onChange={(v) => setForm((f) => ({ ...f, phone: v }))} error={errors.phone} required />
           <div className="grid grid-cols-2 gap-3">
-            <TextField label="Latitude (opsional)" type="number" value={form.latitude} onChange={(v) => setForm((f) => ({ ...f, latitude: v }))} error={errors.latitude} />
-            <TextField label="Longitude (opsional)" type="number" value={form.longitude} onChange={(v) => setForm((f) => ({ ...f, longitude: v }))} error={errors.longitude} />
+            <TextField label="Latitude" type="number" value={form.latitude} onChange={(v) => setForm((f) => ({ ...f, latitude: v }))} error={errors.latitude} required />
+            <TextField label="Longitude" type="number" value={form.longitude} onChange={(v) => setForm((f) => ({ ...f, longitude: v }))} error={errors.longitude} required />
           </div>
           <SelectField
             label="Metode Pembayaran"
