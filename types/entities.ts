@@ -27,6 +27,12 @@ export interface Sales extends BaseEntity {
   status: ActiveStatus;
 }
 
+// cash_on_delivery = warung membayar langsung sejumlah produk yang dikirim
+//   saat itu juga.
+// next_visit = warung membayar pada kunjungan sales berikutnya, dengan
+//   menyerahkan hasil penjualan produk yang dikirim sebelumnya (konsinyasi).
+export type WarungPaymentTerm = "cash_on_delivery" | "next_visit";
+
 export interface Warung extends BaseEntity {
   name: string;
   region_id: string;
@@ -34,6 +40,7 @@ export interface Warung extends BaseEntity {
   phone?: string;
   latitude?: number;
   longitude?: number;
+  payment_term: WarungPaymentTerm;
   status: ActiveStatus;
 }
 

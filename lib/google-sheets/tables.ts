@@ -37,6 +37,10 @@ export const WARUNG_TABLE = {
     "status",
     "created_at",
     "updated_at",
+    // Ditambahkan belakangan (opsi metode pembayaran warung) — diletakkan di
+    // AKHIR array supaya kolom baru tinggal ditambahkan di ujung kanan sheet
+    // "Warung" tanpa mengubah posisi kolom lama.
+    "payment_term",
   ],
 };
 

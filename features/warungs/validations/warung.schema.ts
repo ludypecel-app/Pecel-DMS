@@ -7,6 +7,7 @@ export const warungSchema = z.object({
   phone: z.string().trim().max(20).optional(),
   latitude: z.number().min(-90).max(90).optional(),
   longitude: z.number().min(-180).max(180).optional(),
+  payment_term: z.enum(["cash_on_delivery", "next_visit"]).default("cash_on_delivery"),
   status: z.enum(["active", "inactive"]).default("active"),
 });
 

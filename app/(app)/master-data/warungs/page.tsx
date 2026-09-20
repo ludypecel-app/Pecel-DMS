@@ -8,11 +8,25 @@ import { Modal } from "@/components/ui/Modal";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { TextField, SelectField } from "@/components/forms/fields";
 import { useActiveRegions } from "@/features/regions/hooks/useActiveRegions";
-import type { Warung } from "@/types/entities";
+import { WARUNG_PAYMENT_TERM_LABEL, WARUNG_PAYMENT_TERM_COLOR } from "@/features/warungs/constants";
+import type { Warung, WarungPaymentTerm } from "@/types/entities";
 
 type StatusFilter = "" | "active" | "inactive";
 
-const emptyForm = { name: "", region_id: "", address: "", phone: "", latitude: "", longitude: "" };
+const emptyForm = {
+  name: "",
+  region_id: "",
+  address: "",
+  phone: "",
+  latitude: "",
+  longitude: "",
+  payment_term: "cash_on_delivery" as WarungPaymentTerm,
+};
+
+const PAYMENT_TERM_OPTIONS = (Object.keys(WARUNG_PAYMENT_TERM_LABEL) as WarungPaymentTerm[]).map((value) => ({
+  value,
+  label: WARUNG_PAYMENT_TERM_LABEL[value],
+}));
 
 export default function WarungsPage() {
   const regions = useActiveRegions();
@@ -69,6 +83,8 @@ export default function WarungsPage() {
       phone: warung.phone ?? "",
       latitude: warung.latitude != null ? String(warung.latitude) : "",
       longitude: warung.longitude != null ? String(warung.longitude) : "",
+      // Fallback untuk data lama (dibuat sebelum opsi ini ada).
+      payment_term: warung.payment_term ?? "cash_on_delivery",
     });
     setErrors({});
     setModalOpen(true);
@@ -147,6 +163,19 @@ export default function WarungsPage() {
     { key: "name", header: "Nama Warung", render: (w) => w.name },
     { key: "region", header: "Wilayah", render: (w) => regionName(w.region_id) },
     { key: "address", header: "Alamat", render: (w) => w.address, hideOnMobile: true },
+    {
+      key: "payment_term",
+      header: "Metode Pembayaran",
+      render: (w) => {
+        const term = w.payment_term ?? "cash_on_delivery";
+        return (
+          <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${WARUNG_PAYMENT_TERM_COLOR[term]}`}>
+            {WARUNG_PAYMENT_TERM_LABEL[term]}
+          </span>
+        );
+      },
+      hideOnMobile: true,
+    },
     { key: "status", header: "Status", render: (w) => <StatusBadge status={w.status} /> },
     {
       key: "actions",
@@ -222,6 +251,18 @@ export default function WarungsPage() {
             <TextField label="Latitude (opsional)" type="number" value={form.latitude} onChange={(v) => setForm((f) => ({ ...f, latitude: v }))} error={errors.latitude} />
             <TextField label="Longitude (opsional)" type="number" value={form.longitude} onChange={(v) => setForm((f) => ({ ...f, longitude: v }))} error={errors.longitude} />
           </div>
+          <SelectField
+            label="Metode Pembayaran"
+            value={form.payment_term}
+            onChange={(v) => setForm((f) => ({ ...f, payment_term: v as WarungPaymentTerm }))}
+            error={errors.payment_term}
+            options={PAYMENT_TERM_OPTIONS}
+          />
+          <p className="-mt-2 text-xs text-ink-muted">
+            {form.payment_term === "next_visit"
+              ? "Warung membayar pada kunjungan berikutnya, dengan menyerahkan hasil penjualan produk yang dikirim sebelumnya."
+              : "Warung membayar tunai sejumlah produk yang dikirim saat itu juga."}
+          </p>
           <div className="flex justify-end gap-2 pt-2">
             <button type="button" onClick={() => setModalOpen(false)} className="rounded-md px-4 py-2 text-sm font-medium text-ink-muted hover:bg-surface-page">
               Batal
