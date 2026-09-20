@@ -11,9 +11,10 @@ interface AppShellProps {
 }
 
 // Layout responsif 3 mode mengikuti hasil redesain "Pulsar":
-// - Desktop (lg+): sidebar penuh di kiri.
-// - Tablet (md–lg): rail ikon di kiri.
-// - Mobile (<md): bottom tab bar + sheet "Lainnya".
+// - Desktop (lg+): sidebar penuh di kiri (avatar & keluar di footer sidebar).
+// - Tablet (md–lg): rail ikon di kiri (avatar & keluar via topbar).
+// - Mobile (<md): bottom tab bar 4 menu utama + hamburger topbar untuk
+//   menu lainnya, avatar & keluar via topbar.
 export function AppShell({ role, userName, children }: AppShellProps) {
   return (
     <div className="flex h-screen overflow-hidden bg-surface-page">
@@ -21,7 +22,7 @@ export function AppShell({ role, userName, children }: AppShellProps) {
       <Rail role={role} className="hidden md:flex lg:hidden" />
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <Header />
+        <Header role={role} userName={userName} />
         <main className="flex-1 overflow-y-auto p-4 pb-20 md:p-6 md:pb-6">{children}</main>
       </div>
 

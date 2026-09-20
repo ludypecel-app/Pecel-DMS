@@ -108,7 +108,7 @@ export const assignmentService = {
       userId: sales.id,
       type: "assignment_created",
       message: `Anda mendapat penugasan baru untuk pesanan ${order.order_number}.`,
-      link: `/assignments/${assignment.id}`,
+      link: `/assignments`,
     });
 
     return attachOrder(assignment);
@@ -152,7 +152,7 @@ export const assignmentService = {
       userId: "admin",
       type: "assignment_accepted",
       message: `Penugasan untuk pesanan telah diterima sales.`,
-      link: `/assignments/${id}`,
+      link: `/assignments`,
     });
 
     return attachOrder(updated);
@@ -199,7 +199,7 @@ export const assignmentService = {
       userId: "admin", // lihat catatan di notifikasi "assignment_accepted" di atas
       type: "assignment_rejected",
       message: `Sales menolak penugasan. Alasan: ${reason}`,
-      link: `/assignments/${id}`,
+      link: `/assignments`,
     });
 
     return attachOrder(updated);
@@ -263,7 +263,7 @@ export const assignmentService = {
       userId: assignment.sales_id,
       type: "picking_done",
       message: "Picking selesai — pesanan siap dikirim.",
-      link: `/assignments/${id}`,
+      link: `/assignments`,
     });
 
     return attachOrder(updated);
@@ -357,7 +357,7 @@ export const assignmentService = {
       message: outOfRange
         ? `Sales telah check-in, tapi berjarak ~${distanceM}m dari titik warung (di luar radius ${CHECK_IN_RADIUS_METERS}m) — mohon ditinjau.`
         : "Sales telah sampai di lokasi warung.",
-      link: `/assignments/${id}`,
+      link: `/assignments`,
     });
 
     return attachOrder(updated);
@@ -421,7 +421,7 @@ export const assignmentService = {
       userId: assignment.sales_id,
       type: "assignment_cancelled",
       message: `Penugasan Anda dibatalkan admin. Alasan: ${reason}`,
-      link: `/assignments/${id}`,
+      link: `/assignments`,
     });
 
     return attachOrder(updated);
@@ -461,7 +461,7 @@ export const assignmentService = {
       userId: assignment.sales_id,
       type: "assignment_completed",
       message: "Admin telah mengonfirmasi kunjungan Anda selesai.",
-      link: `/assignments/${id}`,
+      link: `/assignments`,
     });
 
     return attachOrder(updated);
@@ -506,7 +506,7 @@ export const assignmentService = {
       userId: assignment.sales_id,
       type: "assignment_reopened",
       message: `Admin membuka kembali kunjungan untuk koreksi. Alasan: ${reason}`,
-      link: `/assignments/${id}`,
+      link: `/assignments`,
     });
 
     return attachOrder(updated);

@@ -200,7 +200,7 @@ export const visitService = {
       userId: "admin",
       type: "visit_checked_out",
       message: `Sales menyelesaikan kunjungan untuk pesanan ${order.order_number}. Menunggu konfirmasi Anda.`,
-      link: `/assignments/${assignmentId}`,
+      link: `/assignments`,
     });
   },
 
