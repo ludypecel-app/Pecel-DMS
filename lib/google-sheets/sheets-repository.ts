@@ -17,6 +17,14 @@ interface SheetTable {
 const CACHE_TTL_MS = 15_000;
 const readCache = new Map<string, { data: unknown[]; expiresAt: number }>();
 
+// Dedup permintaan yang sedang berjalan per tabel: kalau beberapa request
+// datang bersamaan sebelum cache di atas terisi (mis. Dashboard yang
+// memanggil beberapa service sekaligus, atau beberapa user membuka
+// halaman yang sama nyaris bersamaan), mereka menunggu SATU panggilan
+// Google Sheets API yang sama alih-alih masing-masing menembak API sendiri
+// — mengurangi latensi & pemakaian quota tanpa mengubah perilaku cache TTL.
+const inFlightReads = new Map<string, Promise<string[][]>>();
+
 function invalidateCache(table: SheetTable) {
   readCache.delete(`${table.spreadsheetId}:${table.sheetName}`);
 }
@@ -89,13 +97,25 @@ export class SheetsRepository<T extends BaseEntity> implements Repository<T> {
       return cached.data as string[][];
     }
 
-    const res = await this.client.spreadsheets.values.get({
-      spreadsheetId: this.table.spreadsheetId,
-      range: this.range,
-    });
-    const rows = (res.data.values ?? []) as string[][];
-    readCache.set(cacheKey, { data: rows, expiresAt: Date.now() + CACHE_TTL_MS });
-    return rows;
+    // Sudah ada pembacaan tabel yang sama sedang berjalan (mis. dipanggil
+    // dari beberapa Promise.all sekaligus) — ikut menunggu hasilnya alih-alih
+    // menembak Google Sheets API lagi untuk data yang sama.
+    const pending = inFlightReads.get(cacheKey);
+    if (pending) return pending;
+
+    const request = this.client.spreadsheets.values
+      .get({ spreadsheetId: this.table.spreadsheetId, range: this.range })
+      .then((res) => {
+        const rows = (res.data.values ?? []) as string[][];
+        readCache.set(cacheKey, { data: rows, expiresAt: Date.now() + CACHE_TTL_MS });
+        return rows;
+      })
+      .finally(() => {
+        inFlightReads.delete(cacheKey);
+      });
+
+    inFlightReads.set(cacheKey, request);
+    return request;
   }
 
   async findAll(filter?: Partial<T>): Promise<T[]> {

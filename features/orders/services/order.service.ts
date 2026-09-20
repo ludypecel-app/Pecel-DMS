@@ -37,16 +37,33 @@ export const orderService = {
     status?: OrderStatus;
     regionId?: string;
   }): Promise<OrderWithDetails[]> {
-    let items = await orderRepo.findAll();
-    if (params?.status) items = items.filter((o) => o.status === params.status);
-    if (params?.regionId) items = items.filter((o) => o.region_id === params.regionId);
+    // Ambil seluruh OrderDetail SEKALI saja lalu kelompokkan per order_id di
+    // memori, alih-alih memanggil attachDetails() (yang query ulang seluruh
+    // sheet OrderDetail) untuk tiap pesanan satu per satu — pola N+1 yang
+    // tadinya membuat daftar pesanan makin lambat seiring bertambahnya data.
+    const [items, allDetails] = await Promise.all([orderRepo.findAll(), orderDetailRepo.findAll()]);
+
+    let filtered = items;
+    if (params?.status) filtered = filtered.filter((o) => o.status === params.status);
+    if (params?.regionId) filtered = filtered.filter((o) => o.region_id === params.regionId);
     if (params?.search) {
       const q = params.search.toLowerCase();
-      items = items.filter((o) => o.order_number.toLowerCase().includes(q));
+      filtered = filtered.filter((o) => o.order_number.toLowerCase().includes(q));
     }
     // Urutkan terbaru dulu.
-    items.sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
-    return Promise.all(items.map(attachDetails));
+    filtered.sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+
+    const detailsByOrder = new Map<string, OrderDetail[]>();
+    allDetails.forEach((d) => {
+      const arr = detailsByOrder.get(d.order_id);
+      if (arr) arr.push(d);
+      else detailsByOrder.set(d.order_id, [d]);
+    });
+
+    return filtered.map((order) => {
+      const details = detailsByOrder.get(order.id) ?? [];
+      return { ...order, details, total: details.reduce((sum, d) => sum + d.subtotal, 0) };
+    });
   },
 
   async getById(id: string): Promise<OrderWithDetails | null> {

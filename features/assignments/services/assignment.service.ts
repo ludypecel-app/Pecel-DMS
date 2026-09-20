@@ -52,7 +52,29 @@ export const assignmentService = {
     if (params?.salesId) items = items.filter((a) => a.sales_id === params.salesId);
     if (params?.status) items = items.filter((a) => a.status === params.status);
     items.sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
-    return Promise.all(items.map(attachOrder));
+
+    // Ambil seluruh Order & OrderDetail SEKALI saja lalu petakan di memori,
+    // alih-alih attachOrder() (findById + findAll per baris) dipanggil satu
+    // per satu untuk tiap penugasan — pola N+1 yang memperlambat daftar
+    // Penugasan/Kanban seiring bertambahnya data.
+    const [allOrders, allDetails] = await Promise.all([orderRepo.findAll(), orderDetailRepo.findAll()]);
+    const orderMap = new Map(allOrders.map((o) => [o.id, o]));
+    const detailsByOrder = new Map<string, OrderDetail[]>();
+    allDetails.forEach((d) => {
+      const arr = detailsByOrder.get(d.order_id);
+      if (arr) arr.push(d);
+      else detailsByOrder.set(d.order_id, [d]);
+    });
+
+    return items.map((assignment) => {
+      const order = orderMap.get(assignment.order_id);
+      if (!order) return { ...assignment, order: null };
+      const details = detailsByOrder.get(order.id) ?? [];
+      return {
+        ...assignment,
+        order: { ...order, details, total: details.reduce((sum, d) => sum + d.subtotal, 0) },
+      };
+    });
   },
 
   async getById(id: string): Promise<AssignmentWithOrder | null> {
