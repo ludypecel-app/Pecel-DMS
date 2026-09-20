@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import {
   ClipboardList,
@@ -16,6 +15,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { StatCard } from "@/components/dashboard/StatCard";
+import { ButtonLink } from "@/components/ui/Button";
 import type { AdminDashboardData, SalesDashboardData } from "@/features/dashboard/types/dashboard.types";
 
 const ORDER_STATUS_LABEL_SHORT: Record<string, string> = {
@@ -146,9 +146,9 @@ export default function DashboardPage() {
                   ))}
                 </div>
               )}
-              <Link href="/reports" className="mt-3 inline-block text-xs font-medium text-forest-700 hover:underline">
+              <ButtonLink variant="tertiary" tone="brand" inline href="/reports" className="mt-3 !text-xs">
                 Lihat laporan per wilayah →
-              </Link>
+              </ButtonLink>
             </div>
 
             <div className="rounded-lg border border-border bg-surface-raised p-4">
@@ -172,9 +172,9 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <Link href="/assignments/kanban" className="inline-block text-sm font-medium text-forest-700 hover:underline">
+          <ButtonLink variant="tertiary" tone="brand" inline href="/assignments/kanban">
             Lihat Kanban Penugasan →
-          </Link>
+          </ButtonLink>
         </>
       )}
 
@@ -241,9 +241,9 @@ export default function DashboardPage() {
             )}
           </div>
 
-          <Link href="/assignments" className="inline-block text-sm font-medium text-forest-700 hover:underline">
+          <ButtonLink variant="tertiary" tone="brand" inline href="/assignments">
             Lihat Semua Tugas Saya →
-          </Link>
+          </ButtonLink>
         </>
       )}
     </div>

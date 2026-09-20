@@ -12,6 +12,7 @@ import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import { ORDER_STATUS_LABEL, ORDER_STATUS_COLOR } from "@/features/orders/constants";
 import { Modal } from "@/components/ui/Modal";
 import { TextField, SelectField } from "@/components/forms/fields";
+import { Button, ButtonLink } from "@/components/ui/Button";
 import type { OrderStatus } from "@/types/entities";
 import type { OrderWithDetails } from "@/features/orders/types/order.types";
 import type { AssignmentWithOrder } from "@/features/assignments/types/assignment.types";
@@ -275,13 +276,9 @@ export default function AssignmentsKanbanPage() {
     if (!assignment) {
       if (order.status === "scheduling" && !isSales) {
         return (
-          <button
-            type="button"
-            onClick={() => openAssignModal(order)}
-            className="w-full rounded-md bg-forest-700 px-2 py-1.5 text-[11px] font-medium text-white hover:bg-forest-600"
-          >
+          <Button variant="primary" size="sm" className="w-full" onClick={() => openAssignModal(order)}>
             Tugaskan Sales
-          </button>
+          </Button>
         );
       }
       return null;
@@ -290,12 +287,12 @@ export default function AssignmentsKanbanPage() {
     if (assignment.status === "assigned") {
       return isSales ? (
         <div className="flex gap-2">
-          <button type="button" onClick={() => handleAccept(assignment.id)} className="flex-1 rounded-md bg-forest-700 px-2 py-1.5 text-[11px] font-medium text-white hover:bg-forest-600">
+          <Button variant="primary" size="sm" className="flex-1" onClick={() => handleAccept(assignment.id)}>
             Terima
-          </button>
-          <button type="button" onClick={() => openRejectModal(assignment.id)} className="flex-1 rounded-md border border-danger/40 px-2 py-1.5 text-[11px] font-medium text-danger hover:bg-danger/10">
+          </Button>
+          <Button variant="tertiary" tone="danger" size="sm" className="flex-1 border border-danger/40" onClick={() => openRejectModal(assignment.id)}>
             Tolak
-          </button>
+          </Button>
         </div>
       ) : (
         <p className="text-[11px] text-ink-muted">Menunggu sales</p>
@@ -303,51 +300,45 @@ export default function AssignmentsKanbanPage() {
     }
     if (assignment.status === "ready_to_picking") {
       return !isSales ? (
-        <button type="button" onClick={() => openPickingModal(card)} className="w-full rounded-md bg-forest-700 px-2 py-1.5 text-[11px] font-medium text-white hover:bg-forest-600">
+        <Button variant="primary" size="sm" className="w-full" onClick={() => openPickingModal(card)}>
           Konfirmasi Picking
-        </button>
+        </Button>
       ) : (
         <p className="text-[11px] text-ink-muted">Menunggu admin</p>
       );
     }
     if (assignment.status === "ready_to_delivery") {
       return isSales ? (
-        <button type="button" onClick={() => handleStartDelivery(assignment.id)} className="w-full rounded-md bg-forest-700 px-2 py-1.5 text-[11px] font-medium text-white hover:bg-forest-600">
+        <Button variant="primary" size="sm" className="w-full" onClick={() => handleStartDelivery(assignment.id)}>
           Mulai Kirim
-        </button>
+        </Button>
       ) : (
         <p className="text-[11px] text-ink-muted">Menunggu sales</p>
       );
     }
     if (assignment.status === "on_delivery") {
       return isSales ? (
-        <button type="button" onClick={() => handleCheckIn(assignment.id)} className="w-full rounded-md bg-forest-700 px-2 py-1.5 text-[11px] font-medium text-white hover:bg-forest-600">
+        <Button variant="primary" size="sm" className="w-full" onClick={() => handleCheckIn(assignment.id)}>
           Check In (Sampai)
-        </button>
+        </Button>
       ) : (
         <p className="text-[11px] text-ink-muted">Menunggu sales</p>
       );
     }
     if (assignment.status === "arrived") {
       return isSales ? (
-        <Link
-          href={`/assignments/${assignment.id}/visit`}
-          className="block w-full rounded-md bg-forest-700 px-2 py-1.5 text-center text-[11px] font-medium text-white hover:bg-forest-600"
-        >
+        <ButtonLink variant="primary" size="sm" className="w-full" href={`/assignments/${assignment.id}/visit`}>
           Isi Data Kunjungan
-        </Link>
+        </ButtonLink>
       ) : (
         <p className="text-[11px] text-ink-muted">Menunggu sales</p>
       );
     }
     if (assignment.status === "visited" || assignment.status === "completed") {
       return !isSales ? (
-        <Link
-          href={`/assignments/${assignment.id}/review`}
-          className="block w-full rounded-md border border-border px-2 py-1.5 text-center text-[11px] font-medium text-ink hover:bg-surface-page"
-        >
+        <ButtonLink variant="tertiary" tone="neutral" size="sm" className="w-full border border-border" href={`/assignments/${assignment.id}/review`}>
           {assignment.status === "visited" ? "Review & Konfirmasi" : "Lihat Review"}
-        </Link>
+        </ButtonLink>
       ) : (
         <p className="text-[11px] text-ink-muted">Menunggu admin</p>
       );
@@ -600,12 +591,12 @@ export default function AssignmentsKanbanPage() {
             </div>
           ))}
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={() => setPickingModal(null)} className="rounded-md px-4 py-2 text-sm font-medium text-ink-muted hover:bg-surface-page">
+            <Button variant="tertiary" tone="neutral" onClick={() => setPickingModal(null)}>
               Batal
-            </button>
-            <button type="submit" disabled={submitting} className="rounded-md bg-forest-700 px-4 py-2 text-sm font-medium text-white hover:bg-forest-600 disabled:opacity-50">
+            </Button>
+            <Button type="submit" variant="primary" disabled={submitting}>
               {submitting ? "Menyimpan..." : "Konfirmasi Picking Selesai"}
-            </button>
+            </Button>
           </div>
         </form>
       </Modal>
@@ -614,16 +605,12 @@ export default function AssignmentsKanbanPage() {
         <form onSubmit={submitCancel} className="space-y-3">
           <TextField label="Alasan Pembatalan" value={cancelReason} onChange={setCancelReason} required placeholder="mis. Warung tutup permanen" />
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={() => setCancelModal(null)} className="rounded-md px-4 py-2 text-sm font-medium text-ink-muted hover:bg-surface-page">
+            <Button variant="tertiary" tone="neutral" onClick={() => setCancelModal(null)}>
               Batal
-            </button>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="rounded-md bg-danger px-4 py-2 text-sm font-medium text-white hover:bg-danger/90 disabled:opacity-50"
-            >
+            </Button>
+            <Button type="submit" variant="primary" tone="danger" disabled={submitting}>
               {submitting ? "Memproses..." : "Ya, Batalkan"}
-            </button>
+            </Button>
           </div>
         </form>
       </Modal>
@@ -643,12 +630,12 @@ export default function AssignmentsKanbanPage() {
           <TextField label="Waktu Picking" type="time" value={assignForm.picking_time} onChange={(v) => setAssignForm((f) => ({ ...f, picking_time: v }))} error={assignErrors.picking_time} required />
           <TextField label="Tanggal Pengiriman" type="date" value={assignForm.delivery_date} onChange={(v) => setAssignForm((f) => ({ ...f, delivery_date: v }))} error={assignErrors.delivery_date} required />
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={() => setAssignModalOrder(null)} className="rounded-md px-4 py-2 text-sm font-medium text-ink-muted hover:bg-surface-page">
+            <Button variant="tertiary" tone="neutral" onClick={() => setAssignModalOrder(null)}>
               Batal
-            </button>
-            <button type="submit" disabled={assignSubmitting} className="rounded-md bg-forest-700 px-4 py-2 text-sm font-medium text-white hover:bg-forest-600 disabled:opacity-50">
+            </Button>
+            <Button type="submit" variant="primary" disabled={assignSubmitting}>
               {assignSubmitting ? "Menugaskan..." : "Tugaskan"}
-            </button>
+            </Button>
           </div>
         </form>
       </Modal>
@@ -657,12 +644,12 @@ export default function AssignmentsKanbanPage() {
         <form onSubmit={handleReject} className="space-y-3">
           <TextField label="Alasan Penolakan" value={rejectReason} onChange={setRejectReason} placeholder="mis. Wilayah di luar jangkauan hari ini" required />
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={() => setRejectModalId(null)} className="rounded-md px-4 py-2 text-sm font-medium text-ink-muted hover:bg-surface-page">
+            <Button variant="tertiary" tone="neutral" onClick={() => setRejectModalId(null)}>
               Batal
-            </button>
-            <button type="submit" className="rounded-md bg-danger px-4 py-2 text-sm font-medium text-white hover:bg-danger/90">
+            </Button>
+            <Button type="submit" variant="primary" tone="danger">
               Tolak Penugasan
-            </button>
+            </Button>
           </div>
         </form>
       </Modal>
@@ -730,12 +717,12 @@ export default function AssignmentsKanbanPage() {
             )}
 
             <div className="flex justify-between border-t border-border pt-3">
-              <Link href={`/orders/${detailCard.order.id}`} className="text-sm font-medium text-forest-700 hover:underline">
+              <ButtonLink variant="tertiary" tone="brand" inline href={`/orders/${detailCard.order.id}`}>
                 Buka Halaman Detail Pesanan →
-              </Link>
-              <button type="button" onClick={() => setDetailCard(null)} className="rounded-md px-4 py-2 text-sm font-medium text-ink-muted hover:bg-surface-page">
+              </ButtonLink>
+              <Button variant="tertiary" tone="neutral" onClick={() => setDetailCard(null)}>
                 Tutup
-              </button>
+              </Button>
             </div>
           </div>
         )}

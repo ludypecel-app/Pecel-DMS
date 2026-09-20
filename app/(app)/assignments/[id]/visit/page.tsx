@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { SelectField, TextField } from "@/components/forms/fields";
+import { Button, ButtonLink } from "@/components/ui/Button";
 import type { VisitFormData } from "@/features/visits/types/visit.types";
 
 interface RowState {
@@ -114,9 +115,9 @@ export default function VisitDataEntryPage() {
         <p className="text-sm text-ink-muted">
           Data kunjungan untuk {form.orderNumber} telah tersimpan dan menunggu konfirmasi admin.
         </p>
-        <Link href="/assignments" className="inline-block rounded-md bg-forest-700 px-4 py-2 text-sm font-medium text-white hover:bg-forest-600">
+        <ButtonLink variant="primary" href="/assignments">
           Kembali ke Penugasan
-        </Link>
+        </ButtonLink>
       </div>
     );
   }
@@ -240,12 +241,12 @@ export default function VisitDataEntryPage() {
         </section>
 
         <div className="flex justify-end gap-2 pb-4">
-          <button type="button" onClick={() => router.push("/assignments")} className="rounded-md px-4 py-2 text-sm font-medium text-ink-muted hover:bg-surface-page">
+          <Button variant="tertiary" tone="neutral" onClick={() => router.push("/assignments")}>
             Batal
-          </button>
-          <button type="submit" disabled={submitting} className="rounded-md bg-forest-700 px-5 py-2 text-sm font-medium text-white hover:bg-forest-600 disabled:opacity-50">
+          </Button>
+          <Button type="submit" variant="primary" disabled={submitting}>
             {submitting ? "Menyimpan..." : "Simpan / Check-Out"}
-          </button>
+          </Button>
         </div>
       </form>
     </div>

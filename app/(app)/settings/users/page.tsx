@@ -6,6 +6,7 @@ import { DataTable, type Column } from "@/components/tables/DataTable";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Modal } from "@/components/ui/Modal";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { Button } from "@/components/ui/Button";
 import { TextField, SelectField } from "@/components/forms/fields";
 import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import { useActiveSales } from "@/features/sales/hooks/useActiveSales";
@@ -145,15 +146,15 @@ export default function UsersPage() {
       header: "Aksi",
       render: (u) => (
         <div className="flex gap-3">
-          <button type="button" onClick={() => openEditModal(u)} className="text-sm font-medium text-forest-700 hover:underline">
+          <Button variant="tertiary" tone="brand" inline onClick={() => openEditModal(u)}>
             Edit
-          </button>
-          <button type="button" onClick={() => handleToggleStatus(u)} className="text-sm font-medium text-ink-muted hover:underline">
+          </Button>
+          <Button variant="tertiary" tone="neutral" inline onClick={() => handleToggleStatus(u)}>
             {u.status === "active" ? "Nonaktifkan" : "Aktifkan"}
-          </button>
-          <button type="button" onClick={() => openDeleteModal(u)} className="text-sm font-medium text-danger hover:underline">
+          </Button>
+          <Button variant="tertiary" tone="danger" inline onClick={() => openDeleteModal(u)}>
             Hapus
-          </button>
+          </Button>
         </div>
       ),
     },
@@ -166,10 +167,10 @@ export default function UsersPage() {
           <h1 className="h1 !text-[20px]">Pengguna</h1>
           <p className="text-sm text-ink-muted">Kelola akun login admin & sales</p>
         </div>
-        <button type="button" onClick={openCreateModal} className="flex items-center justify-center gap-1.5 rounded-md bg-forest-700 px-4 py-2 text-sm font-medium text-white hover:bg-forest-600">
+        <Button variant="primary" onClick={openCreateModal}>
           <Plus size={16} />
           Tambah User
-        </button>
+        </Button>
       </div>
 
       <DataTable columns={columns} data={users} getRowId={(u) => u.id} isLoading={isLoading} emptyMessage="Belum ada user." />
@@ -210,12 +211,12 @@ export default function UsersPage() {
             />
           )}
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={() => setModalOpen(false)} className="rounded-md px-4 py-2 text-sm font-medium text-ink-muted hover:bg-surface-page">
+            <Button variant="tertiary" tone="neutral" onClick={() => setModalOpen(false)}>
               Batal
-            </button>
-            <button type="submit" disabled={submitting} className="rounded-md bg-forest-700 px-4 py-2 text-sm font-medium text-white hover:bg-forest-600 disabled:opacity-50">
+            </Button>
+            <Button type="submit" variant="primary" disabled={submitting}>
               {submitting ? "Menyimpan..." : "Simpan"}
-            </button>
+            </Button>
           </div>
         </form>
       </Modal>

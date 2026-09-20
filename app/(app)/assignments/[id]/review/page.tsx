@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, AlertTriangle } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/forms/fields";
 import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import type { VisitReviewData } from "@/features/visits/types/visit.types";
@@ -178,14 +179,14 @@ export default function AssignmentReviewPage() {
 
       <div className="flex gap-2 pb-4">
         {canConfirm && (
-          <button type="button" onClick={handleConfirm} disabled={submitting} className="rounded-md bg-forest-700 px-4 py-2 text-sm font-medium text-white hover:bg-forest-600 disabled:opacity-50">
+          <Button variant="primary" onClick={handleConfirm} disabled={submitting}>
             {submitting ? "Memproses..." : "Konfirmasi Selesai"}
-          </button>
+          </Button>
         )}
         {canReopen && (
-          <button type="button" onClick={() => setReopenModal(true)} className="rounded-md border border-border px-4 py-2 text-sm font-medium text-ink hover:bg-surface-page">
+          <Button variant="tertiary" tone="neutral" onClick={() => setReopenModal(true)}>
             Buka Kembali untuk Koreksi
-          </button>
+          </Button>
         )}
         {!canConfirm && !canReopen && (
           <p className="text-sm text-ink-muted">
@@ -202,12 +203,12 @@ export default function AssignmentReviewPage() {
           </p>
           <TextField label="Alasan" value={reopenReason} onChange={setReopenReason} placeholder="mis. Jumlah retur tidak sesuai, perlu dikoreksi sales" required />
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={() => setReopenModal(false)} className="rounded-md px-4 py-2 text-sm font-medium text-ink-muted hover:bg-surface-page">
+            <Button variant="tertiary" tone="neutral" onClick={() => setReopenModal(false)}>
               Batal
-            </button>
-            <button type="submit" disabled={submitting || !reopenReason.trim()} className="rounded-md bg-forest-700 px-4 py-2 text-sm font-medium text-white hover:bg-forest-600 disabled:opacity-50">
+            </Button>
+            <Button type="submit" variant="primary" disabled={submitting || !reopenReason.trim()}>
               {submitting ? "Memproses..." : "Buka Kembali"}
-            </button>
+            </Button>
           </div>
         </form>
       </Modal>

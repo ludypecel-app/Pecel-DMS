@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Plus, Search, Trash2 } from "lucide-react";
 import { DataTable, type Column } from "@/components/tables/DataTable";
 import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
 import { SelectField, TextField } from "@/components/forms/fields";
 import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import { useActiveRegions } from "@/features/regions/hooks/useActiveRegions";
@@ -222,14 +223,10 @@ function OrdersPageContent() {
           <h1 className="h1 !text-[20px]">Pesanan</h1>
           <p className="text-sm text-ink-muted">Kelola pesanan dari warung</p>
         </div>
-        <button
-          type="button"
-          onClick={openCreateModal}
-          className="flex items-center justify-center gap-1.5 rounded-md bg-forest-700 px-4 py-2 text-sm font-medium text-white hover:bg-forest-600"
-        >
+        <Button variant="primary" onClick={openCreateModal}>
           <Plus size={16} />
           Buat Pesanan
-        </button>
+        </Button>
       </div>
 
       <div className="flex flex-col gap-2 sm:flex-row">
@@ -302,9 +299,9 @@ function OrdersPageContent() {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-ink">Produk Pesanan</span>
-              <button type="button" onClick={addItemRow} className="flex items-center gap-1 text-sm font-medium text-forest-700 hover:underline">
+              <Button variant="tertiary" tone="brand" inline onClick={addItemRow}>
                 <Plus size={14} /> Tambah Produk
-              </button>
+              </Button>
             </div>
 
             {rowsWithPrice.map((row, index) => (
@@ -338,12 +335,12 @@ function OrdersPageContent() {
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={closeModal} className="rounded-md px-4 py-2 text-sm font-medium text-ink-muted hover:bg-surface-page">
+            <Button variant="tertiary" tone="neutral" onClick={closeModal}>
               Batal
-            </button>
-            <button type="submit" disabled={submitting} className="rounded-md bg-forest-700 px-4 py-2 text-sm font-medium text-white hover:bg-forest-600 disabled:opacity-50">
+            </Button>
+            <Button type="submit" variant="primary" disabled={submitting}>
               {submitting ? "Menyimpan..." : "Simpan Pesanan"}
-            </button>
+            </Button>
           </div>
         </form>
       </Modal>

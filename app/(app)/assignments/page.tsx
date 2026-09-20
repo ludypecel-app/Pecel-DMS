@@ -6,6 +6,7 @@ import Link from "next/link";
 import { LayoutGrid } from "lucide-react";
 import { DataTable, type Column } from "@/components/tables/DataTable";
 import { Modal } from "@/components/ui/Modal";
+import { Button, ButtonLink } from "@/components/ui/Button";
 import { SelectField, TextField } from "@/components/forms/fields";
 import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import { useActiveSales } from "@/features/sales/hooks/useActiveSales";
@@ -233,13 +234,13 @@ export default function AssignmentsPage() {
 
     if (a.status === "assigned") {
       return isSales ? (
-        <div className="flex gap-3">
-          <button type="button" onClick={() => handleAccept(a.id)} className="text-sm font-medium text-forest-700 hover:underline">
+        <div className="flex gap-2">
+          <Button variant="primary" size="sm" onClick={() => handleAccept(a.id)}>
             Terima
-          </button>
-          <button type="button" onClick={() => setRejectModalId(a.id)} className="text-sm font-medium text-danger hover:underline">
+          </Button>
+          <Button variant="tertiary" tone="danger" size="sm" onClick={() => setRejectModalId(a.id)}>
             Tolak
-          </button>
+          </Button>
         </div>
       ) : (
         <span className="text-xs text-ink-muted">Menunggu sales</span>
@@ -247,45 +248,45 @@ export default function AssignmentsPage() {
     }
     if (a.status === "ready_to_picking") {
       return !isSales ? (
-        <button type="button" onClick={() => openPickingModal(a)} className="text-sm font-medium text-forest-700 hover:underline">
+        <Button variant="primary" size="sm" onClick={() => openPickingModal(a)}>
           Konfirmasi Picking
-        </button>
+        </Button>
       ) : (
         <span className="text-xs text-ink-muted">Menunggu admin</span>
       );
     }
     if (a.status === "ready_to_delivery") {
       return isSales ? (
-        <button type="button" onClick={() => handleStartDelivery(a.id)} className="text-sm font-medium text-forest-700 hover:underline">
+        <Button variant="primary" size="sm" onClick={() => handleStartDelivery(a.id)}>
           Mulai Kirim
-        </button>
+        </Button>
       ) : (
         <span className="text-xs text-ink-muted">Menunggu sales</span>
       );
     }
     if (a.status === "on_delivery") {
       return isSales ? (
-        <button type="button" onClick={() => handleCheckIn(a.id)} className="text-sm font-medium text-forest-700 hover:underline">
+        <Button variant="primary" size="sm" onClick={() => handleCheckIn(a.id)}>
           Check In (Sampai)
-        </button>
+        </Button>
       ) : (
         <span className="text-xs text-ink-muted">Menunggu sales</span>
       );
     }
     if (a.status === "arrived") {
       return isSales ? (
-        <Link href={`/assignments/${a.id}/visit`} className="text-sm font-medium text-forest-700 hover:underline">
+        <ButtonLink variant="primary" size="sm" href={`/assignments/${a.id}/visit`}>
           Isi Data Kunjungan
-        </Link>
+        </ButtonLink>
       ) : (
         <span className="text-xs text-ink-muted">Menunggu sales</span>
       );
     }
     if (a.status === "visited" || a.status === "completed") {
       return !isSales ? (
-        <Link href={`/assignments/${a.id}/review`} className="text-sm font-medium text-forest-700 hover:underline">
+        <ButtonLink variant="tertiary" tone="brand" inline href={`/assignments/${a.id}/review`}>
           {a.status === "visited" ? "Review & Konfirmasi" : "Lihat Review"}
-        </Link>
+        </ButtonLink>
       ) : (
         <span className="text-xs text-ink-muted">Menunggu admin</span>
       );
@@ -300,13 +301,9 @@ export default function AssignmentsPage() {
       key: "actions",
       header: "Aksi",
       render: (o) => (
-        <button
-          type="button"
-          onClick={() => openAssignModal(o)}
-          className="rounded-md bg-forest-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-forest-600"
-        >
+        <Button variant="primary" size="sm" onClick={() => openAssignModal(o)}>
           Tugaskan Sales
-        </button>
+        </Button>
       ),
     },
   ];
@@ -426,23 +423,19 @@ export default function AssignmentsPage() {
 
             {role === "admin" && (
               <div className="pt-1" onClick={() => setDetailOrder(null)}>
-                <button
-                  type="button"
-                  onClick={() => openAssignModal(detailOrder)}
-                  className="w-full rounded-md bg-forest-700 px-3 py-2 text-sm font-medium text-white hover:bg-forest-600"
-                >
+                <Button variant="primary" className="w-full" onClick={() => openAssignModal(detailOrder)}>
                   Tugaskan Sales
-                </button>
+                </Button>
               </div>
             )}
 
             <div className="flex justify-between border-t border-border pt-3">
-              <Link href={`/orders/${detailOrder.id}`} className="text-sm font-medium text-forest-700 hover:underline">
+              <ButtonLink variant="tertiary" tone="brand" inline href={`/orders/${detailOrder.id}`}>
                 Buka Halaman Detail Pesanan →
-              </Link>
-              <button type="button" onClick={() => setDetailOrder(null)} className="rounded-md px-4 py-2 text-sm font-medium text-ink-muted hover:bg-surface-page">
+              </ButtonLink>
+              <Button variant="tertiary" tone="neutral" onClick={() => setDetailOrder(null)}>
                 Tutup
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -505,12 +498,12 @@ export default function AssignmentsPage() {
             </div>
 
             <div className="flex justify-between border-t border-border pt-3">
-              <Link href={`/orders/${detailAssignment.order.id}`} className="text-sm font-medium text-forest-700 hover:underline">
+              <ButtonLink variant="tertiary" tone="brand" inline href={`/orders/${detailAssignment.order.id}`}>
                 Buka Halaman Detail Pesanan →
-              </Link>
-              <button type="button" onClick={() => setDetailAssignment(null)} className="rounded-md px-4 py-2 text-sm font-medium text-ink-muted hover:bg-surface-page">
+              </ButtonLink>
+              <Button variant="tertiary" tone="neutral" onClick={() => setDetailAssignment(null)}>
                 Tutup
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -531,12 +524,12 @@ export default function AssignmentsPage() {
           <TextField label="Waktu Picking" type="time" value={form.picking_time} onChange={(v) => setForm((f) => ({ ...f, picking_time: v }))} error={errors.picking_time} required />
           <TextField label="Tanggal Pengiriman" type="date" value={form.delivery_date} onChange={(v) => setForm((f) => ({ ...f, delivery_date: v }))} error={errors.delivery_date} required />
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={() => setAssignModalOrder(null)} className="rounded-md px-4 py-2 text-sm font-medium text-ink-muted hover:bg-surface-page">
+            <Button variant="tertiary" tone="neutral" onClick={() => setAssignModalOrder(null)}>
               Batal
-            </button>
-            <button type="submit" disabled={submitting} className="rounded-md bg-forest-700 px-4 py-2 text-sm font-medium text-white hover:bg-forest-600 disabled:opacity-50">
+            </Button>
+            <Button type="submit" variant="primary" disabled={submitting}>
               {submitting ? "Menugaskan..." : "Tugaskan"}
-            </button>
+            </Button>
           </div>
         </form>
       </Modal>
@@ -555,12 +548,12 @@ export default function AssignmentsPage() {
             />
           </label>
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={() => setRejectModalId(null)} className="rounded-md px-4 py-2 text-sm font-medium text-ink-muted hover:bg-surface-page">
+            <Button variant="tertiary" tone="neutral" onClick={() => setRejectModalId(null)}>
               Batal
-            </button>
-            <button type="submit" className="rounded-md bg-danger px-4 py-2 text-sm font-medium text-white hover:bg-danger/90">
+            </Button>
+            <Button type="submit" variant="primary" tone="danger">
               Tolak Penugasan
-            </button>
+            </Button>
           </div>
         </form>
       </Modal>
@@ -592,16 +585,12 @@ export default function AssignmentsPage() {
           ))}
           {actionError && <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{actionError}</p>}
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={() => setPickingModal(null)} className="rounded-md px-4 py-2 text-sm font-medium text-ink-muted hover:bg-surface-page">
+            <Button variant="tertiary" tone="neutral" onClick={() => setPickingModal(null)}>
               Batal
-            </button>
-            <button
-              type="submit"
-              disabled={pickingSubmitting}
-              className="rounded-md bg-forest-700 px-4 py-2 text-sm font-medium text-white hover:bg-forest-600 disabled:opacity-50"
-            >
+            </Button>
+            <Button type="submit" variant="primary" disabled={pickingSubmitting}>
               {pickingSubmitting ? "Menyimpan..." : "Konfirmasi Picking Selesai"}
-            </button>
+            </Button>
           </div>
         </form>
       </Modal>

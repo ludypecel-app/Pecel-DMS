@@ -9,6 +9,7 @@ import { useActiveWarungs } from "@/features/warungs/hooks/useActiveWarungs";
 import { useActiveProducts } from "@/features/products/hooks/useActiveProducts";
 import { ORDER_STATUS_LABEL, ORDER_STATUS_COLOR } from "@/features/orders/constants";
 import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
 import { SelectField, TextField } from "@/components/forms/fields";
 import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import type { OrderStatus } from "@/types/entities";
@@ -239,22 +240,14 @@ export default function OrderDetailPage() {
 
       <div className="flex flex-wrap items-center gap-2">
         {canEdit && (
-          <button
-            type="button"
-            onClick={openEditModal}
-            className="flex items-center gap-1.5 rounded-md border border-border px-4 py-2 text-sm font-medium text-ink hover:bg-surface-page"
-          >
+          <Button variant="tertiary" tone="brand" onClick={openEditModal}>
             <Pencil size={14} /> Edit Pesanan
-          </button>
+          </Button>
         )}
         {canCancel && (
-          <button
-            type="button"
-            onClick={() => setCancelOpen(true)}
-            className="rounded-md border border-danger/30 px-4 py-2 text-sm font-medium text-danger hover:bg-danger/10"
-          >
+          <Button variant="tertiary" tone="danger" onClick={() => setCancelOpen(true)}>
             Batalkan Pesanan
-          </button>
+          </Button>
         )}
         {order.status === "on_delivery" && (
           <p className="text-xs text-ink-muted">
@@ -278,12 +271,12 @@ export default function OrderDetailPage() {
             />
           </label>
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={() => setCancelOpen(false)} className="rounded-md px-4 py-2 text-sm font-medium text-ink-muted hover:bg-surface-page">
+            <Button variant="tertiary" tone="neutral" onClick={() => setCancelOpen(false)}>
               Batal
-            </button>
-            <button type="submit" disabled={submitting} className="rounded-md bg-danger px-4 py-2 text-sm font-medium text-white hover:bg-danger/90 disabled:opacity-50">
+            </Button>
+            <Button type="submit" variant="primary" tone="danger" disabled={submitting}>
               {submitting ? "Memproses..." : "Ya, Batalkan Pesanan"}
-            </button>
+            </Button>
           </div>
         </form>
       </Modal>
@@ -309,9 +302,9 @@ export default function OrderDetailPage() {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-ink">Produk Pesanan</span>
-              <button type="button" onClick={addEditItemRow} className="flex items-center gap-1 text-sm font-medium text-forest-700 hover:underline">
+              <Button variant="tertiary" tone="brand" inline onClick={addEditItemRow}>
                 <Plus size={14} /> Tambah Produk
-              </button>
+              </Button>
             </div>
 
             {editRowsWithPrice.map((row, index) => (
@@ -345,12 +338,12 @@ export default function OrderDetailPage() {
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={() => setEditOpen(false)} className="rounded-md px-4 py-2 text-sm font-medium text-ink-muted hover:bg-surface-page">
+            <Button variant="tertiary" tone="neutral" onClick={() => setEditOpen(false)}>
               Batal
-            </button>
-            <button type="submit" disabled={editSubmitting} className="rounded-md bg-forest-700 px-4 py-2 text-sm font-medium text-white hover:bg-forest-600 disabled:opacity-50">
+            </Button>
+            <Button type="submit" variant="primary" disabled={editSubmitting}>
               {editSubmitting ? "Menyimpan..." : "Simpan Perubahan"}
-            </button>
+            </Button>
           </div>
         </form>
       </Modal>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Sprout, Eye, EyeOff } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -76,13 +77,9 @@ export default function LoginPage() {
               </button>
             </div>
           </label>
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full rounded-md bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50"
-          >
+          <Button type="submit" variant="primary" className="w-full" disabled={submitting}>
             {submitting ? "Memproses..." : "Masuk"}
-          </button>
+          </Button>
         </form>
       </div>
     </div>

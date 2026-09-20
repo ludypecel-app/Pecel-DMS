@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Download, ChevronRight } from "lucide-react";
 import { useActiveSales } from "@/features/sales/hooks/useActiveSales";
+import { Button } from "@/components/ui/Button";
 import { WARUNG_PAYMENT_TERM_LABEL } from "@/features/warungs/constants";
 import type { WarungPaymentTerm } from "@/types/entities";
 
@@ -258,13 +259,9 @@ export default function ReportsPage() {
           <p className="text-sm text-ink-muted">Laporan pembayaran & monitoring kunjungan sales</p>
         </div>
         {(tab === "payments" || tab === "visits") && (
-          <button
-            type="button"
-            onClick={handleExport}
-            className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm font-medium text-ink hover:bg-surface-page"
-          >
+          <Button variant="tertiary" tone="neutral" size="sm" className="border border-border" onClick={handleExport}>
             <Download size={15} /> Export CSV
-          </button>
+          </Button>
         )}
       </div>
 

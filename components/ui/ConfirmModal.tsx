@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertTriangle } from "lucide-react";
+import { Button } from "./Button";
 
 interface ConfirmModalProps {
   open: boolean;
@@ -60,24 +61,12 @@ export function ConfirmModal({
           </div>
         </div>
         <div className="mt-5 flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={loading}
-            className="rounded-md px-4 py-2 text-sm font-medium text-ink-muted hover:bg-surface-page disabled:opacity-50"
-          >
+          <Button variant="tertiary" tone="neutral" onClick={onCancel} disabled={loading}>
             {cancelLabel}
-          </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            disabled={loading}
-            className={`rounded-md px-4 py-2 text-sm font-medium text-white disabled:opacity-50 ${
-              danger ? "bg-danger hover:bg-danger/90" : "bg-forest-700 hover:bg-forest-600"
-            }`}
-          >
+          </Button>
+          <Button variant="primary" tone={danger ? "danger" : "brand"} onClick={onConfirm} disabled={loading}>
             {loading ? "Memproses..." : confirmLabel}
-          </button>
+          </Button>
         </div>
       </div>
     </div>
