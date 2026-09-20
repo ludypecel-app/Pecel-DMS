@@ -61,21 +61,24 @@ export function BottomTabs({ role, className }: BottomTabsProps) {
         <TabLink key={item.href} href={item.href} label={item.label} icon={item.icon} active={isActive(item.href)} />
       ))}
 
-      {showQuickAdd && (
-        <div className="relative flex w-14 flex-none justify-center">
-          <Link
-            href="/orders/new"
-            aria-label="Buat Pesanan"
-            className="absolute -top-6 flex h-14 w-14 items-center justify-center rounded-full bg-accent text-white shadow-md ring-4 ring-surface-raised transition-transform active:scale-95"
-          >
-            <Plus size={26} />
-          </Link>
-        </div>
-      )}
+      {/* Spacer — cuma menjaga jarak antar tab kiri/kanan; tombolnya sendiri
+          diposisikan absolute terhadap <nav> (di bawah) supaya presisi
+          persis separuh keluar dari batas atas kontainer navbar. */}
+      {showQuickAdd && <div className="w-14 flex-none" />}
 
       {rightItems.map((item) => (
         <TabLink key={item.href} href={item.href} label={item.label} icon={item.icon} active={isActive(item.href)} />
       ))}
+
+      {showQuickAdd && (
+        <Link
+          href="/orders/new"
+          aria-label="Buat Pesanan"
+          className="absolute left-1/2 top-0 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-accent text-white shadow-md ring-4 ring-surface-raised transition-transform active:scale-95"
+        >
+          <Plus size={26} />
+        </Link>
+      )}
     </nav>
   );
 }
