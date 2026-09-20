@@ -272,6 +272,7 @@ function OrdersPageContent() {
             value={warungId}
             onChange={setWarungId}
             error={errors.warung_id}
+            required
             options={warungs.map((w) => ({ value: w.id, label: w.name }))}
           />
           {selectedWarung && (
@@ -286,6 +287,7 @@ function OrdersPageContent() {
             value={deliveryDate}
             onChange={setDeliveryDate}
             error={errors.delivery_date}
+            required
           />
 
           <div className="space-y-2">
@@ -303,11 +305,12 @@ function OrdersPageContent() {
                     label="Produk"
                     value={row.product_id}
                     onChange={(v) => updateItemRow(index, { product_id: v })}
+                    required
                     options={products.map((p) => ({ value: p.id, label: `${p.name} — ${formatPrice(p.price)}` }))}
                   />
                 </div>
                 <div className="w-24">
-                  <TextField label="Jumlah" type="number" value={row.quantity} onChange={(v) => updateItemRow(index, { quantity: v })} />
+                  <TextField label="Jumlah" type="number" value={row.quantity} onChange={(v) => updateItemRow(index, { quantity: v })} required />
                 </div>
                 <div className="w-28 pb-2 text-right text-sm text-ink-muted">{formatPrice(row.subtotal)}</div>
                 {items.length > 1 && (

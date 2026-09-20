@@ -192,7 +192,7 @@ export default function AssignmentReviewPage() {
             Status akan dikembalikan ke Visited. Data stok/pembayaran yang sudah ada TIDAK dihapus — koreksi lanjutan
             saat ini perlu dilakukan manual (pengembangan form revisi otomatis menyusul).
           </p>
-          <TextField label="Alasan" value={reopenReason} onChange={setReopenReason} placeholder="Wajib diisi" />
+          <TextField label="Alasan" value={reopenReason} onChange={setReopenReason} required />
           <div className="flex justify-end gap-2 pt-2">
             <button type="button" onClick={() => setReopenModal(false)} className="rounded-md px-4 py-2 text-sm font-medium text-ink-muted hover:bg-surface-page">
               Batal

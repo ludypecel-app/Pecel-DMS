@@ -219,6 +219,7 @@ export default function RegionsPage() {
             onChange={(v) => setForm((f) => ({ ...f, code: v }))}
             error={errors.code}
             placeholder="mis. MLG-01"
+            required
           />
           <TextField
             label="Nama Wilayah"
@@ -226,6 +227,7 @@ export default function RegionsPage() {
             onChange={(v) => setForm((f) => ({ ...f, name: v }))}
             error={errors.name}
             placeholder="mis. Malang Kota"
+            required
           />
           <div className="flex justify-end gap-2 pt-2">
             <button

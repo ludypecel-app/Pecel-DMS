@@ -202,13 +202,14 @@ export default function SalesPage() {
       <Modal title={editing ? "Edit Sales" : "Tambah Sales"} open={modalOpen} onClose={() => setModalOpen(false)}>
         <form onSubmit={handleSubmit} className="space-y-3">
           {errors._form && <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{errors._form}</p>}
-          <TextField label="Nama Sales" value={form.name} onChange={(v) => setForm((f) => ({ ...f, name: v }))} error={errors.name} placeholder="mis. Budi Santoso" />
-          <TextField label="Nomor Telepon" type="tel" value={form.phone} onChange={(v) => setForm((f) => ({ ...f, phone: v }))} error={errors.phone} placeholder="mis. 081234567890" />
+          <TextField label="Nama Sales" value={form.name} onChange={(v) => setForm((f) => ({ ...f, name: v }))} error={errors.name} placeholder="mis. Budi Santoso" required />
+          <TextField label="Nomor Telepon" type="tel" value={form.phone} onChange={(v) => setForm((f) => ({ ...f, phone: v }))} error={errors.phone} placeholder="mis. 081234567890" required />
           <SelectField
             label="Wilayah Kerja"
             value={form.assigned_region_id}
             onChange={(v) => setForm((f) => ({ ...f, assigned_region_id: v }))}
             error={errors.assigned_region_id}
+            required
             options={regions.map((r) => ({ value: r.id, label: r.name }))}
           />
           <TextField label="ID User (opsional)" value={form.user_id} onChange={(v) => setForm((f) => ({ ...f, user_id: v }))} error={errors.user_id} placeholder="Biasanya tidak perlu diisi manual" />

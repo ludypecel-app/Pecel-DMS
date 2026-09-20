@@ -330,6 +330,8 @@ export default function AssignmentsKanbanPage() {
               </span>
               <input
                 type="number"
+                min={0}
+                required
                 value={pickingQty[d.product_id] ?? ""}
                 onChange={(e) => setPickingQty((prev) => ({ ...prev, [d.product_id]: e.target.value }))}
                 className="w-24 rounded-md border border-border px-2 py-1 text-sm"
@@ -349,7 +351,7 @@ export default function AssignmentsKanbanPage() {
 
       <Modal title="Batalkan" open={!!cancelModal} onClose={() => setCancelModal(null)}>
         <div className="space-y-3">
-          <TextField label="Alasan Pembatalan" value={cancelReason} onChange={setCancelReason} placeholder="Wajib diisi" />
+          <TextField label="Alasan Pembatalan" value={cancelReason} onChange={setCancelReason} required />
           <div className="flex justify-end gap-2 pt-2">
             <button type="button" onClick={() => setCancelModal(null)} className="rounded-md px-4 py-2 text-sm font-medium text-ink-muted hover:bg-surface-page">
               Batal

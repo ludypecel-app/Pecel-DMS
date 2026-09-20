@@ -354,11 +354,12 @@ export default function AssignmentsPage() {
             value={form.sales_id}
             onChange={(v) => setForm((f) => ({ ...f, sales_id: v }))}
             error={errors.sales_id}
+            required
             options={salesList.map((s) => ({ value: s.id, label: s.name }))}
           />
-          <TextField label="Tanggal Picking" type="date" value={form.picking_date} onChange={(v) => setForm((f) => ({ ...f, picking_date: v }))} error={errors.picking_date} />
-          <TextField label="Waktu Picking" type="text" value={form.picking_time} onChange={(v) => setForm((f) => ({ ...f, picking_time: v }))} error={errors.picking_time} placeholder="mis. 08:00" />
-          <TextField label="Tanggal Pengiriman" type="date" value={form.delivery_date} onChange={(v) => setForm((f) => ({ ...f, delivery_date: v }))} error={errors.delivery_date} />
+          <TextField label="Tanggal Picking" type="date" value={form.picking_date} onChange={(v) => setForm((f) => ({ ...f, picking_date: v }))} error={errors.picking_date} required />
+          <TextField label="Waktu Picking" type="time" value={form.picking_time} onChange={(v) => setForm((f) => ({ ...f, picking_time: v }))} error={errors.picking_time} required />
+          <TextField label="Tanggal Pengiriman" type="date" value={form.delivery_date} onChange={(v) => setForm((f) => ({ ...f, delivery_date: v }))} error={errors.delivery_date} required />
           <div className="flex justify-end gap-2 pt-2">
             <button type="button" onClick={() => setAssignModalOrder(null)} className="rounded-md px-4 py-2 text-sm font-medium text-ink-muted hover:bg-surface-page">
               Batal
@@ -409,6 +410,8 @@ export default function AssignmentsPage() {
               </span>
               <input
                 type="number"
+                min={0}
+                required
                 value={pickingQty[d.product_id] ?? ""}
                 onChange={(e) => setPickingQty((prev) => ({ ...prev, [d.product_id]: e.target.value }))}
                 className="w-24 rounded-md border border-border px-2 py-1 text-sm"

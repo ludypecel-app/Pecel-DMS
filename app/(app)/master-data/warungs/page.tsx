@@ -237,15 +237,16 @@ export default function WarungsPage() {
       <Modal title={editing ? "Edit Warung" : "Tambah Warung"} open={modalOpen} onClose={() => setModalOpen(false)}>
         <form onSubmit={handleSubmit} className="space-y-3">
           {errors._form && <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{errors._form}</p>}
-          <TextField label="Nama Warung" value={form.name} onChange={(v) => setForm((f) => ({ ...f, name: v }))} error={errors.name} placeholder="mis. Warung Bu Sri" />
+          <TextField label="Nama Warung" value={form.name} onChange={(v) => setForm((f) => ({ ...f, name: v }))} error={errors.name} placeholder="mis. Warung Bu Sri" required />
           <SelectField
             label="Wilayah"
             value={form.region_id}
             onChange={(v) => setForm((f) => ({ ...f, region_id: v }))}
             error={errors.region_id}
+            required
             options={regions.map((r) => ({ value: r.id, label: r.name }))}
           />
-          <TextField label="Alamat" value={form.address} onChange={(v) => setForm((f) => ({ ...f, address: v }))} error={errors.address} placeholder="mis. Jl. Merdeka No. 10" />
+          <TextField label="Alamat" value={form.address} onChange={(v) => setForm((f) => ({ ...f, address: v }))} error={errors.address} placeholder="mis. Jl. Merdeka No. 10" required />
           <TextField label="Nomor Telepon (opsional)" type="tel" value={form.phone} onChange={(v) => setForm((f) => ({ ...f, phone: v }))} error={errors.phone} />
           <div className="grid grid-cols-2 gap-3">
             <TextField label="Latitude (opsional)" type="number" value={form.latitude} onChange={(v) => setForm((f) => ({ ...f, latitude: v }))} error={errors.latitude} />
@@ -256,6 +257,7 @@ export default function WarungsPage() {
             value={form.payment_term}
             onChange={(v) => setForm((f) => ({ ...f, payment_term: v as WarungPaymentTerm }))}
             error={errors.payment_term}
+            required
             options={PAYMENT_TERM_OPTIONS}
           />
           <p className="-mt-2 text-xs text-ink-muted">

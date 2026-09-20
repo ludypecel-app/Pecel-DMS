@@ -155,6 +155,7 @@ export default function VisitDataEntryPage() {
                     type="number"
                     min={0}
                     max={r.shipped_quantity}
+                    required
                     value={rows[r.product_id]?.sold ?? "0"}
                     onChange={(e) => updateRow(r.product_id, { sold: e.target.value })}
                     className="mt-0.5 w-full rounded-md border border-border px-2 py-1 text-sm"
@@ -170,6 +171,7 @@ export default function VisitDataEntryPage() {
                     type="number"
                     min={0}
                     max={r.sisaStok}
+                    required
                     value={rows[r.product_id]?.returned ?? "0"}
                     onChange={(e) => updateRow(r.product_id, { returned: e.target.value })}
                     className="mt-0.5 w-full rounded-md border border-border px-2 py-1 text-sm"
@@ -193,6 +195,7 @@ export default function VisitDataEntryPage() {
             label="Status Pembayaran"
             value={paymentStatus}
             onChange={setPaymentStatus}
+            required
             options={[
               { value: "belum_bayar", label: "Belum Bayar" },
               { value: "sebagian", label: "Sebagian" },
@@ -204,6 +207,7 @@ export default function VisitDataEntryPage() {
             label="Metode Pembayaran"
             value={paymentMethod}
             onChange={setPaymentMethod}
+            required
             options={[
               { value: "tunai", label: "Tunai" },
               { value: "transfer", label: "Transfer" },
