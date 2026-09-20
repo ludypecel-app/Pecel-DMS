@@ -233,6 +233,7 @@ export default function VisitDataEntryPage() {
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
+              placeholder="mis. Warung minta pengiriman lebih pagi minggu depan"
               className="w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-forest-600 focus:ring-1 focus:ring-forest-600"
             />
           </label>

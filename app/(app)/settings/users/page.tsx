@@ -177,8 +177,8 @@ export default function UsersPage() {
       <Modal title={editing ? "Edit User" : "Tambah User"} open={modalOpen} onClose={() => setModalOpen(false)}>
         <form onSubmit={handleSubmit} className="space-y-3">
           {errors._form && <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{errors._form}</p>}
-          <TextField label="Nama" value={form.name} onChange={(v) => setForm((f) => ({ ...f, name: v }))} error={errors.name} required />
-          <TextField label="Email" type="text" value={form.email} onChange={(v) => setForm((f) => ({ ...f, email: v }))} error={errors.email} required />
+          <TextField label="Nama" value={form.name} onChange={(v) => setForm((f) => ({ ...f, name: v }))} error={errors.name} placeholder="mis. Budi Santoso" required />
+          <TextField label="Email" type="text" value={form.email} onChange={(v) => setForm((f) => ({ ...f, email: v }))} error={errors.email} placeholder="mis. budi@pecel-dms.com" required />
           <TextField
             label={editing ? "Password Baru (kosongkan jika tidak diubah)" : "Password"}
             type="text"

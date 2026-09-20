@@ -394,7 +394,8 @@ export default function AssignmentsKanbanPage() {
     );
   }
 
-  async function submitPickingConfirm() {
+  async function submitPickingConfirm(e: React.FormEvent) {
+    e.preventDefault();
     if (!pickingModal?.assignment) return;
     setSubmitting(true);
     const items = Object.entries(pickingQty).map(([product_id, qty]) => ({
@@ -416,7 +417,8 @@ export default function AssignmentsKanbanPage() {
     fetchData();
   }
 
-  async function submitCancel() {
+  async function submitCancel(e: React.FormEvent) {
+    e.preventDefault();
     if (!cancelModal) return;
     setSubmitting(true);
     const { order, assignment } = cancelModal;
@@ -565,7 +567,7 @@ export default function AssignmentsKanbanPage() {
       )}
 
       <Modal title={`Konfirmasi Picking — ${pickingModal?.order.order_number ?? ""}`} open={!!pickingModal} onClose={() => setPickingModal(null)}>
-        <div className="space-y-3">
+        <form onSubmit={submitPickingConfirm} className="space-y-3">
           <p className="text-xs text-ink-muted">
             Periksa jumlah aktual yang diserahkan ke sales. Selisih dari jumlah pesanan diperbolehkan (partial fulfillment).
           </p>
@@ -578,6 +580,7 @@ export default function AssignmentsKanbanPage() {
                 type="number"
                 min={0}
                 required
+                placeholder="0"
                 value={pickingQty[d.product_id] ?? ""}
                 onChange={(e) => setPickingQty((prev) => ({ ...prev, [d.product_id]: e.target.value }))}
                 className="w-24 rounded-md border border-border px-2 py-1 text-sm"
@@ -588,30 +591,29 @@ export default function AssignmentsKanbanPage() {
             <button type="button" onClick={() => setPickingModal(null)} className="rounded-md px-4 py-2 text-sm font-medium text-ink-muted hover:bg-surface-page">
               Batal
             </button>
-            <button type="button" onClick={submitPickingConfirm} disabled={submitting} className="rounded-md bg-forest-700 px-4 py-2 text-sm font-medium text-white hover:bg-forest-600 disabled:opacity-50">
+            <button type="submit" disabled={submitting} className="rounded-md bg-forest-700 px-4 py-2 text-sm font-medium text-white hover:bg-forest-600 disabled:opacity-50">
               {submitting ? "Menyimpan..." : "Konfirmasi Picking Selesai"}
             </button>
           </div>
-        </div>
+        </form>
       </Modal>
 
       <Modal title="Batalkan" open={!!cancelModal} onClose={() => setCancelModal(null)}>
-        <div className="space-y-3">
-          <TextField label="Alasan Pembatalan" value={cancelReason} onChange={setCancelReason} required />
+        <form onSubmit={submitCancel} className="space-y-3">
+          <TextField label="Alasan Pembatalan" value={cancelReason} onChange={setCancelReason} required placeholder="mis. Warung tutup permanen" />
           <div className="flex justify-end gap-2 pt-2">
             <button type="button" onClick={() => setCancelModal(null)} className="rounded-md px-4 py-2 text-sm font-medium text-ink-muted hover:bg-surface-page">
               Batal
             </button>
             <button
-              type="button"
-              onClick={submitCancel}
-              disabled={submitting || !cancelReason.trim()}
+              type="submit"
+              disabled={submitting}
               className="rounded-md bg-danger px-4 py-2 text-sm font-medium text-white hover:bg-danger/90 disabled:opacity-50"
             >
               {submitting ? "Memproses..." : "Ya, Batalkan"}
             </button>
           </div>
-        </div>
+        </form>
       </Modal>
 
       <Modal title={`Tugaskan Sales — ${assignModalOrder?.order_number ?? ""}`} open={!!assignModalOrder} onClose={() => setAssignModalOrder(null)}>
@@ -641,7 +643,7 @@ export default function AssignmentsKanbanPage() {
 
       <Modal title="Tolak Penugasan" open={!!rejectModalId} onClose={() => setRejectModalId(null)}>
         <form onSubmit={handleReject} className="space-y-3">
-          <TextField label="Alasan Penolakan" value={rejectReason} onChange={setRejectReason} required />
+          <TextField label="Alasan Penolakan" value={rejectReason} onChange={setRejectReason} placeholder="mis. Wilayah di luar jangkauan hari ini" required />
           <div className="flex justify-end gap-2 pt-2">
             <button type="button" onClick={() => setRejectModalId(null)} className="rounded-md px-4 py-2 text-sm font-medium text-ink-muted hover:bg-surface-page">
               Batal

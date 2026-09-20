@@ -162,7 +162,8 @@ export default function AssignmentsPage() {
     setPickingModal(a);
   }
 
-  async function submitPickingConfirm() {
+  async function submitPickingConfirm(e: React.FormEvent) {
+    e.preventDefault();
     if (!pickingModal) return;
     setPickingSubmitting(true);
     const items = Object.entries(pickingQty).map(([product_id, qty]) => ({
@@ -386,6 +387,7 @@ export default function AssignmentsPage() {
               onChange={(e) => setRejectReason(e.target.value)}
               rows={3}
               required
+              placeholder="mis. Wilayah di luar jangkauan hari ini"
               className="w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-forest-600 focus:ring-1 focus:ring-forest-600"
             />
           </label>
@@ -405,7 +407,7 @@ export default function AssignmentsPage() {
         open={!!pickingModal}
         onClose={() => setPickingModal(null)}
       >
-        <div className="space-y-3">
+        <form onSubmit={submitPickingConfirm} className="space-y-3">
           <p className="text-xs text-ink-muted">
             Periksa jumlah aktual yang diserahkan ke sales. Selisih dari jumlah pesanan diperbolehkan (partial fulfillment).
           </p>
@@ -418,6 +420,7 @@ export default function AssignmentsPage() {
                 type="number"
                 min={0}
                 required
+                placeholder="0"
                 value={pickingQty[d.product_id] ?? ""}
                 onChange={(e) => setPickingQty((prev) => ({ ...prev, [d.product_id]: e.target.value }))}
                 className="w-24 rounded-md border border-border px-2 py-1 text-sm"
@@ -430,15 +433,14 @@ export default function AssignmentsPage() {
               Batal
             </button>
             <button
-              type="button"
-              onClick={submitPickingConfirm}
+              type="submit"
               disabled={pickingSubmitting}
               className="rounded-md bg-forest-700 px-4 py-2 text-sm font-medium text-white hover:bg-forest-600 disabled:opacity-50"
             >
               {pickingSubmitting ? "Menyimpan..." : "Konfirmasi Picking Selesai"}
             </button>
           </div>
-        </div>
+        </form>
       </Modal>
     </div>
   );

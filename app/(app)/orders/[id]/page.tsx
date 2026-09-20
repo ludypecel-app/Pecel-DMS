@@ -273,6 +273,7 @@ export default function OrderDetailPage() {
               onChange={(e) => setReason(e.target.value)}
               rows={3}
               required
+              placeholder="mis. Warung membatalkan pesanan"
               className="w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-forest-600 focus:ring-1 focus:ring-forest-600"
             />
           </label>
@@ -325,7 +326,7 @@ export default function OrderDetailPage() {
                   />
                 </div>
                 <div className="w-24">
-                  <TextField label="Jumlah" type="number" value={row.quantity} onChange={(v) => updateEditItemRow(index, { quantity: v })} required />
+                  <TextField label="Jumlah" type="number" value={row.quantity} onChange={(v) => updateEditItemRow(index, { quantity: v })} placeholder="mis. 10" required />
                 </div>
                 <div className="w-28 pb-2 text-right text-sm text-ink-muted">{formatPrice(row.subtotal)}</div>
                 {editItems.length > 1 && (

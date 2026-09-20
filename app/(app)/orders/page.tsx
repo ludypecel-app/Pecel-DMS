@@ -319,7 +319,7 @@ function OrdersPageContent() {
                   />
                 </div>
                 <div className="w-24">
-                  <TextField label="Jumlah" type="number" value={row.quantity} onChange={(v) => updateItemRow(index, { quantity: v })} required />
+                  <TextField label="Jumlah" type="number" value={row.quantity} onChange={(v) => updateItemRow(index, { quantity: v })} placeholder="mis. 10" required />
                 </div>
                 <div className="w-28 pb-2 text-right text-sm text-ink-muted">{formatPrice(row.subtotal)}</div>
                 {items.length > 1 && (
