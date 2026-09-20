@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "./Button";
 
@@ -34,12 +36,27 @@ export function ConfirmModal({
   onConfirm,
   onCancel,
 }: ConfirmModalProps) {
-  if (!open) return null;
+  // Lihat catatan di components/ui/Modal.tsx — di-render lewat portal ke
+  // document.body supaya backdrop selalu menutupi seluruh viewport, bukan
+  // hanya area container yang sedang discroll.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
-  return (
+  useEffect(() => {
+    if (!open) return;
+    const original = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = original;
+    };
+  }, [open]);
+
+  if (!open || !mounted) return null;
+
+  return createPortal(
     <div className="fixed inset-0 z-[60] flex items-end justify-center md:items-center">
       <div
-        className="absolute inset-0 bg-black/40"
+        className="fixed inset-0 bg-black/40"
         onClick={loading ? undefined : onCancel}
         aria-hidden
       />
@@ -69,6 +86,7 @@ export function ConfirmModal({
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

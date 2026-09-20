@@ -275,14 +275,18 @@ export default function AssignmentsKanbanPage() {
    * Kanban tidak lagi cuma bisa di-drag tapi juga bisa langsung dieksekusi
    * begitu ada aksi yang tersedia untuk status kartu tersebut.
    */
-  function renderCardActions(card: CardData) {
+  /** `opts.large`: dipakai di modal Detail Penugasan supaya tombol aksi
+   * sedikit lebih besar (size "md") daripada versi kompak di kartu Kanban
+   * (size "sm") — keduanya tetap mengisi penuh lebar container (`w-full`). */
+  function renderCardActions(card: CardData, opts?: { large?: boolean }) {
     const { order, assignment } = card;
     const isSales = role === "sales";
+    const size = opts?.large ? "md" : "sm";
 
     if (!assignment) {
       if (order.status === "scheduling" && !isSales) {
         return (
-          <Button variant="primary" size="sm" className="w-full" onClick={() => openAssignModal(order)}>
+          <Button variant="primary" size={size} className="w-full" onClick={() => openAssignModal(order)}>
             Tugaskan Sales
           </Button>
         );
@@ -293,10 +297,10 @@ export default function AssignmentsKanbanPage() {
     if (assignment.status === "assigned") {
       return isSales ? (
         <div className="flex gap-2">
-          <Button variant="primary" size="sm" className="flex-1" onClick={() => handleAccept(assignment.id)}>
+          <Button variant="primary" size={size} className="flex-1" onClick={() => handleAccept(assignment.id)}>
             Terima
           </Button>
-          <Button variant="tertiary" tone="danger" size="sm" className="flex-1 border border-danger/40" onClick={() => openRejectModal(assignment.id)}>
+          <Button variant="tertiary" tone="danger" size={size} className="flex-1 border border-danger/40" onClick={() => openRejectModal(assignment.id)}>
             Tolak
           </Button>
         </div>
@@ -306,7 +310,7 @@ export default function AssignmentsKanbanPage() {
     }
     if (assignment.status === "ready_to_picking") {
       return !isSales ? (
-        <Button variant="primary" size="sm" className="w-full" onClick={() => openPickingModal(card)}>
+        <Button variant="primary" size={size} className="w-full" onClick={() => openPickingModal(card)}>
           Konfirmasi Picking
         </Button>
       ) : (
@@ -315,7 +319,7 @@ export default function AssignmentsKanbanPage() {
     }
     if (assignment.status === "ready_to_delivery") {
       return isSales ? (
-        <Button variant="primary" size="sm" className="w-full" onClick={() => handleStartDelivery(assignment.id)}>
+        <Button variant="primary" size={size} className="w-full" onClick={() => handleStartDelivery(assignment.id)}>
           Mulai Kirim
         </Button>
       ) : (
@@ -324,7 +328,7 @@ export default function AssignmentsKanbanPage() {
     }
     if (assignment.status === "on_delivery") {
       return isSales ? (
-        <Button variant="primary" size="sm" className="w-full" onClick={() => handleCheckIn(assignment.id)}>
+        <Button variant="primary" size={size} className="w-full" onClick={() => handleCheckIn(assignment.id)}>
           Check In (Sampai)
         </Button>
       ) : (
@@ -333,7 +337,7 @@ export default function AssignmentsKanbanPage() {
     }
     if (assignment.status === "arrived") {
       return isSales ? (
-        <ButtonLink variant="primary" size="sm" className="w-full" href={`/assignments/${assignment.id}/visit`}>
+        <ButtonLink variant="primary" size={size} className="w-full" href={`/assignments/${assignment.id}/visit`}>
           Isi Data Kunjungan
         </ButtonLink>
       ) : (
@@ -342,7 +346,7 @@ export default function AssignmentsKanbanPage() {
     }
     if (assignment.status === "visited" || assignment.status === "completed") {
       return !isSales ? (
-        <ButtonLink variant="tertiary" tone="neutral" size="sm" className="w-full border border-border" href={`/assignments/${assignment.id}/review`}>
+        <ButtonLink variant="tertiary" tone="neutral" size={size} className="w-full border border-border" href={`/assignments/${assignment.id}/review`}>
           {assignment.status === "visited" ? "Review & Konfirmasi" : "Lihat Review"}
         </ButtonLink>
       ) : (
@@ -718,7 +722,7 @@ export default function AssignmentsKanbanPage() {
 
             {renderCardActions(detailCard) && (
               <div className="pt-1" onClick={() => setDetailCard(null)}>
-                {renderCardActions(detailCard)}
+                {renderCardActions(detailCard, { large: true })}
               </div>
             )}
 

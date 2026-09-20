@@ -232,20 +232,25 @@ export default function AssignmentsPage() {
 
   /** Tombol aksi untuk penugasan sesuai status — dipakai baik di kolom
    * tabel maupun di modal detail (klik baris), supaya perilakunya konsisten
-   * di semua tempat. */
-  function renderAssignmentActions(a: AssignmentWithOrder) {
+   * di semua tempat. Di modal (`fullWidth`), tombol dibuat mengisi lebar
+   * container dan sedikit lebih besar (size "md") supaya lebih mudah
+   * disentuh; di kolom tabel tetap kompak (size "sm"). */
+  function renderAssignmentActions(a: AssignmentWithOrder, opts?: { fullWidth?: boolean }) {
     // Aksi sales (terima/tolak/mulai kirim/check-in) hanya tampil untuk
     // akun sales yang login — identitas diambil dari session di server,
     // bukan dipilih manual lagi.
     const isSales = role === "sales";
+    const fullWidth = opts?.fullWidth ?? false;
+    const size = fullWidth ? "md" : "sm";
+    const widthCls = fullWidth ? "w-full" : "";
 
     if (a.status === "assigned") {
       return isSales ? (
         <div className="flex gap-2">
-          <Button variant="primary" size="sm" onClick={() => handleAccept(a.id)}>
+          <Button variant="primary" size={size} className={fullWidth ? "flex-1" : ""} onClick={() => handleAccept(a.id)}>
             Terima
           </Button>
-          <Button variant="tertiary" tone="danger" size="sm" onClick={() => setRejectModalId(a.id)}>
+          <Button variant="tertiary" tone="danger" size={size} className={fullWidth ? "flex-1" : ""} onClick={() => setRejectModalId(a.id)}>
             Tolak
           </Button>
         </div>
@@ -255,7 +260,7 @@ export default function AssignmentsPage() {
     }
     if (a.status === "ready_to_picking") {
       return !isSales ? (
-        <Button variant="primary" size="sm" onClick={() => openPickingModal(a)}>
+        <Button variant="primary" size={size} className={widthCls} onClick={() => openPickingModal(a)}>
           Konfirmasi Picking
         </Button>
       ) : (
@@ -264,7 +269,7 @@ export default function AssignmentsPage() {
     }
     if (a.status === "ready_to_delivery") {
       return isSales ? (
-        <Button variant="primary" size="sm" onClick={() => handleStartDelivery(a.id)}>
+        <Button variant="primary" size={size} className={widthCls} onClick={() => handleStartDelivery(a.id)}>
           Mulai Kirim
         </Button>
       ) : (
@@ -273,7 +278,7 @@ export default function AssignmentsPage() {
     }
     if (a.status === "on_delivery") {
       return isSales ? (
-        <Button variant="primary" size="sm" onClick={() => handleCheckIn(a.id)}>
+        <Button variant="primary" size={size} className={widthCls} onClick={() => handleCheckIn(a.id)}>
           Check In (Sampai)
         </Button>
       ) : (
@@ -282,7 +287,7 @@ export default function AssignmentsPage() {
     }
     if (a.status === "arrived") {
       return isSales ? (
-        <ButtonLink variant="primary" size="sm" href={`/assignments/${a.id}/visit`}>
+        <ButtonLink variant="primary" size={size} className={widthCls} href={`/assignments/${a.id}/visit`}>
           Isi Data Kunjungan
         </ButtonLink>
       ) : (
@@ -501,7 +506,7 @@ export default function AssignmentsPage() {
             </div>
 
             <div className="pt-1" onClick={() => setDetailAssignment(null)}>
-              {renderAssignmentActions(detailAssignment)}
+              {renderAssignmentActions(detailAssignment, { fullWidth: true })}
             </div>
 
             <div className="flex justify-between border-t border-border pt-3">
