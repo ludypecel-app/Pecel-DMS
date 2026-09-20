@@ -340,15 +340,21 @@ export default function AssignmentsPage() {
             {role === "sales" ? "Penugasan yang diberikan kepada Anda" : "Tugaskan sales ke pesanan, dan pantau status penerimaan tugas"}
           </p>
         </div>
-        {role === "admin" && (
+      </div>
+
+      {role === "admin" && (
+        <div className="flex gap-1 border-b border-border">
+          <span className="shrink-0 border-b-2 border-forest-700 px-3 py-2 text-sm font-medium text-forest-700">
+            List
+          </span>
           <Link
             href="/assignments/kanban"
-            className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm font-medium text-ink hover:bg-surface-page"
+            className="flex shrink-0 items-center gap-1.5 px-3 py-2 text-sm font-medium text-ink-muted hover:text-ink"
           >
-            <LayoutGrid size={15} /> Lihat Kanban
+            <LayoutGrid size={14} /> Kanban
           </Link>
-        )}
-      </div>
+        </div>
+      )}
 
       {actionError && <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{actionError}</p>}
 

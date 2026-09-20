@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, List as ListIcon } from "lucide-react";
 import { useActiveRegions } from "@/features/regions/hooks/useActiveRegions";
 import { useActiveSales } from "@/features/sales/hooks/useActiveSales";
 import { useActiveWarungs } from "@/features/warungs/hooks/useActiveWarungs";
@@ -455,6 +455,18 @@ export default function AssignmentsKanbanPage() {
             konfirmasi picking/membatalkan.
           </p>
         </div>
+      </div>
+
+      <div className="flex gap-1 border-b border-border">
+        <Link
+          href="/assignments"
+          className="flex shrink-0 items-center gap-1.5 px-3 py-2 text-sm font-medium text-ink-muted hover:text-ink"
+        >
+          <ListIcon size={14} /> List
+        </Link>
+        <span className="shrink-0 border-b-2 border-forest-700 px-3 py-2 text-sm font-medium text-forest-700">
+          Kanban
+        </span>
       </div>
 
       {banner && (
