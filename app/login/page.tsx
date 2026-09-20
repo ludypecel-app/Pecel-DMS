@@ -72,7 +72,7 @@ export default function LoginPage() {
                 className="absolute inset-y-0 right-0 flex items-center px-3 text-ink-muted hover:text-ink"
                 aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
               >
-                {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                {showPassword ? <Eye size={17} /> : <EyeOff size={17} />}
               </button>
             </div>
           </label>
