@@ -29,7 +29,11 @@ export const cancelAssignmentSchema = z.object({
   reason: z.string().trim().min(1, "Alasan pembatalan wajib diisi"),
 });
 
+// Koordinat WAJIB diisi — validasi radius check-in bersifat keras (hard
+// block), jadi tanpa koordinat perangkat, jarak ke warung tidak bisa
+// dipastikan sama sekali dan check-in harus ditolak (lihat
+// assignment.service.ts checkIn()).
 export const checkInSchema = z.object({
-  latitude: z.number().optional(),
-  longitude: z.number().optional(),
+  latitude: z.number({ required_error: "Lokasi GPS wajib diaktifkan untuk check-in" }),
+  longitude: z.number({ required_error: "Lokasi GPS wajib diaktifkan untuk check-in" }),
 });

@@ -129,20 +129,21 @@ export default function AssignmentsPage() {
   }
 
   /**
-   * Ambil lokasi GPS perangkat sales sebelum check-in. Kalau izin ditolak,
-   * GPS tidak tersedia, atau browser tidak mendukung geolocation, tetap
-   * lanjutkan check-in TANPA koordinat (bukan diblokir) — sesuai keputusan
-   * bahwa validasi jarak di server bersifat soft/opsional, bukan wajib.
+   * Ambil lokasi GPS perangkat sales sebelum check-in. Koordinat bersifat
+   * WAJIB — validasi radius di server sekarang keras (hard block, tanpa
+   * toleransi), jadi kalau izin lokasi ditolak, GPS tidak tersedia, timeout,
+   * atau browser tidak mendukung geolocation, check-in TIDAK dilanjutkan
+   * (tidak memanggil API sama sekali) dan sales langsung diberi tahu.
    */
-  function getCurrentPosition(): Promise<{ latitude?: number; longitude?: number }> {
-    return new Promise((resolve) => {
+  function getCurrentPosition(): Promise<{ latitude: number; longitude: number }> {
+    return new Promise((resolve, reject) => {
       if (typeof navigator === "undefined" || !navigator.geolocation) {
-        resolve({});
+        reject(new Error("Perangkat/browser ini tidak mendukung lokasi GPS. Check-in tidak bisa dilakukan."));
         return;
       }
       navigator.geolocation.getCurrentPosition(
         (pos) => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
-        () => resolve({}), // izin ditolak / timeout / posisi tidak tersedia
+        () => reject(new Error("Lokasi GPS wajib diaktifkan untuk check-in — mohon izinkan akses lokasi lalu coba lagi.")),
         { enableHighAccuracy: true, timeout: 8000 }
       );
     });
@@ -150,7 +151,13 @@ export default function AssignmentsPage() {
 
   async function handleCheckIn(id: string) {
     setActionError("");
-    const { latitude, longitude } = await getCurrentPosition();
+    let latitude: number, longitude: number;
+    try {
+      ({ latitude, longitude } = await getCurrentPosition());
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : "Gagal mengambil lokasi GPS");
+      return;
+    }
     const res = await fetch(`/api/assignments/${id}/check-in`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

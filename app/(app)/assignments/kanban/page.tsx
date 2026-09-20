@@ -233,23 +233,29 @@ export default function AssignmentsKanbanPage() {
     fetchData();
   }
 
-  /** Lihat catatan di assignments/page.tsx — sama persis: koordinat bersifat opsional (soft), tidak memblokir check-in. */
-  function getCurrentPosition(): Promise<{ latitude?: number; longitude?: number }> {
-    return new Promise((resolve) => {
+  /** Lihat catatan di assignments/page.tsx — sama persis: koordinat WAJIB, validasi radius keras (tanpa toleransi). */
+  function getCurrentPosition(): Promise<{ latitude: number; longitude: number }> {
+    return new Promise((resolve, reject) => {
       if (typeof navigator === "undefined" || !navigator.geolocation) {
-        resolve({});
+        reject(new Error("Perangkat/browser ini tidak mendukung lokasi GPS. Check-in tidak bisa dilakukan."));
         return;
       }
       navigator.geolocation.getCurrentPosition(
         (pos) => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
-        () => resolve({}),
+        () => reject(new Error("Lokasi GPS wajib diaktifkan untuk check-in — mohon izinkan akses lokasi lalu coba lagi.")),
         { enableHighAccuracy: true, timeout: 8000 }
       );
     });
   }
 
   async function handleCheckIn(id: string) {
-    const { latitude, longitude } = await getCurrentPosition();
+    let latitude: number, longitude: number;
+    try {
+      ({ latitude, longitude } = await getCurrentPosition());
+    } catch (e) {
+      showBanner(e instanceof Error ? e.message : "Gagal mengambil lokasi GPS");
+      return;
+    }
     const res = await fetch(`/api/assignments/${id}/check-in`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

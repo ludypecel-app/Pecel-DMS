@@ -317,14 +317,15 @@ export const assignmentService = {
   /**
    * Sales check-in setibanya di warung → status Arrived. Membuat record
    * Visit (dipakai lagi di Tahap 6 untuk pendataan stok/pembayaran).
-   * Izin lokasi ditolak/GPS tidak tersedia tetap diperbolehkan check-in
-   * tanpa koordinat — sesuai catatan Tahap 6 brief bahwa GPS tidak selalu ada.
    *
-   * Validasi jarak ke koordinat Warung bersifat SOFT: kalau sales & Warung
-   * sama-sama punya koordinat dan jaraknya melebihi CHECK_IN_RADIUS_METERS,
-   * check-in tetap berhasil — hanya ditandai `checked_in_out_of_range` agar
-   * admin bisa meninjau di halaman Review, bukan memblokir sales di lapangan
-   * (GPS ponsel bisa meleset cukup jauh, apalagi di dalam ruangan).
+   * Validasi jarak ke koordinat Warung bersifat KERAS (hard block, TANPA
+   * toleransi): koordinat GPS wajib dikirim (lihat checkInSchema), Warung
+   * tujuan wajib punya koordinat (sudah wajib diisi sejak Warung dibuat —
+   * lihat warung.schema.ts), dan jarak antara keduanya harus berada dalam
+   * radius CHECK_IN_RADIUS_METERS (50m). Kalau salah satu syarat itu tidak
+   * terpenuhi, check-in DITOLAK di sini (bukan cuma ditandai untuk ditinjau
+   * admin nanti) — sales harus berada tepat di lokasi warung untuk bisa
+   * check-in.
    */
   async checkIn(id: string, salesId: string, input: unknown): Promise<AssignmentWithOrder> {
     const assignment = await repository.findById(id);
@@ -339,16 +340,17 @@ export const assignmentService = {
     if (!order) throw new Error("Pesanan terkait tidak ditemukan");
     const warung = await warungRepo.findById(order.warung_id);
 
-    let outOfRange: boolean | undefined;
-    let distanceM: number | undefined;
-    if (
-      latitude !== undefined &&
-      longitude !== undefined &&
-      warung?.latitude !== undefined &&
-      warung?.longitude !== undefined
-    ) {
-      distanceM = Math.round(haversineDistanceMeters(latitude, longitude, warung.latitude, warung.longitude));
-      outOfRange = distanceM > CHECK_IN_RADIUS_METERS;
+    if (warung?.latitude === undefined || warung?.longitude === undefined) {
+      throw new Error(
+        "Koordinat Warung tujuan belum diatur di master data — tidak bisa memvalidasi jarak check-in. Hubungi admin untuk melengkapi Latitude/Longitude Warung."
+      );
+    }
+
+    const distanceM = Math.round(haversineDistanceMeters(latitude, longitude, warung.latitude, warung.longitude));
+    if (distanceM > CHECK_IN_RADIUS_METERS) {
+      throw new Error(
+        `Check-in ditolak — Anda berjarak ~${distanceM}m dari titik warung (radius maksimal ${CHECK_IN_RADIUS_METERS}m, tanpa toleransi). Dekati lokasi warung lalu coba lagi.`
+      );
     }
 
     await visitRepo.create({
@@ -358,7 +360,7 @@ export const assignmentService = {
       checked_in_at: new Date().toISOString(),
       checked_in_lat: latitude,
       checked_in_lng: longitude,
-      checked_in_out_of_range: outOfRange,
+      checked_in_out_of_range: false,
       checked_in_distance_m: distanceM,
     } as Omit<Visit, "id" | "created_at" | "updated_at">);
 
@@ -370,15 +372,13 @@ export const assignmentService = {
       entityId: id,
       action: "check_in",
       actorId: salesId,
-      after: { status: "arrived", latitude, longitude, outOfRange, distanceM },
+      after: { status: "arrived", latitude, longitude, distanceM },
     });
 
     await notificationService.send({
       userId: "admin", // lihat catatan di notifikasi "assignment_accepted" di atas
       type: "sales_arrived",
-      message: outOfRange
-        ? `Sales telah check-in, tapi berjarak ~${distanceM}m dari titik warung (di luar radius ${CHECK_IN_RADIUS_METERS}m) — mohon ditinjau.`
-        : "Sales telah sampai di lokasi warung.",
+      message: "Sales telah sampai di lokasi warung.",
       link: `/assignments`,
     });
 
