@@ -36,7 +36,6 @@ function resolveLink(link?: string): string | undefined {
 // navigasi supaya rute turunan seperti /assignments/kanban tidak ikut
 // tertangkap oleh pencocokan awalan menu "Penugasan" (/assignments).
 const EXTRA_TITLES: { match: RegExp; title: string }[] = [
-  { match: /^\/orders\/new/, title: "Pesanan Baru" },
   { match: /^\/orders\/[^/]+$/, title: "Detail Pesanan" },
   { match: /^\/assignments\/kanban/, title: "Kanban Penugasan" },
   { match: /^\/assignments\/[^/]+\/review/, title: "Review Kunjungan" },

@@ -72,7 +72,7 @@ export function BottomTabs({ role, className }: BottomTabsProps) {
 
       {showQuickAdd && (
         <Link
-          href="/orders/new"
+          href="/orders?new=1"
           aria-label="Buat Pesanan"
           className="absolute left-1/2 top-0 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-accent text-white shadow-md ring-4 ring-surface-raised transition-transform active:scale-95"
         >
