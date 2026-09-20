@@ -48,16 +48,16 @@ export function BottomTabs({ role, className }: BottomTabsProps) {
             </Link>
           );
         })}
-        {rest.length > 0 && (
-          <button
-            type="button"
-            onClick={() => setMoreOpen(true)}
-            className="flex flex-1 flex-col items-center gap-0.5 text-ink-muted"
-          >
-            <MoreHorizontal size={20} />
-            <span className="caption text-[11px]">Lainnya</span>
-          </button>
-        )}
+        {/* Selalu tampil — minimal berisi tombol Keluar, meski role tertentu
+            (mis. sales) tidak punya menu tambahan selain 3 tab utama. */}
+        <button
+          type="button"
+          onClick={() => setMoreOpen(true)}
+          className="flex flex-1 flex-col items-center gap-0.5 text-ink-muted"
+        >
+          <MoreHorizontal size={20} />
+          <span className="caption text-[11px]">Lainnya</span>
+        </button>
       </nav>
 
       {moreOpen && (
