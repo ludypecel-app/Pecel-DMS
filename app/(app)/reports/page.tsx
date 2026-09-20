@@ -33,6 +33,7 @@ interface RegionSummaryRow {
   salesCount: number;
   totalOrders: number;
   totalOmzet: number;
+  totalStock: number;
 }
 
 interface RegionWarungRow {
@@ -43,6 +44,7 @@ interface RegionWarungRow {
   totalOrders: number;
   totalOmzet: number;
   lastOrderDate?: string;
+  totalStock: number;
 }
 
 interface RegionDetail {
@@ -52,7 +54,15 @@ interface RegionDetail {
   salesCount: number;
   totalOrders: number;
   totalOmzet: number;
+  totalStock: number;
   warungs: RegionWarungRow[];
+}
+
+/** Rincian stok per produk yang sedang beredar di suatu warung. */
+interface WarungStockRow {
+  productId: string;
+  productName: string;
+  quantity: number;
 }
 
 /** Dipakai untuk tabel "Kinerja Sales" di detail Warung. */
@@ -81,6 +91,8 @@ interface WarungDetail {
   totalOrders: number;
   totalOmzet: number;
   lastOrderDate?: string;
+  totalStock: number;
+  stockByProduct: WarungStockRow[];
   salesPerformance: SalesPerformanceRow[];
 }
 
@@ -379,7 +391,7 @@ export default function ReportsPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 <div className="rounded-lg border border-border bg-surface-raised p-3">
                   <p className="text-xs text-ink-muted">Total Pesanan</p>
                   <p className="text-lg font-semibold text-ink">{warungDetail.totalOrders}</p>
@@ -389,8 +401,38 @@ export default function ReportsPage() {
                   <p className="text-lg font-semibold text-forest-700">{formatPrice(warungDetail.totalOmzet)}</p>
                 </div>
                 <div className="rounded-lg border border-border bg-surface-raised p-3">
+                  <p className="text-xs text-ink-muted">Total Stok</p>
+                  <p className="text-lg font-semibold text-ink">{warungDetail.totalStock}</p>
+                </div>
+                <div className="rounded-lg border border-border bg-surface-raised p-3">
                   <p className="text-xs text-ink-muted">Pesanan Terakhir</p>
                   <p className="text-lg font-semibold text-ink">{warungDetail.lastOrderDate ?? "-"}</p>
+                </div>
+              </div>
+
+              <div>
+                <h2 className="mb-2 text-sm font-semibold text-ink">Stok di {warungDetail.warungName}</h2>
+                <p className="mb-2 text-xs text-ink-muted">Produk yang sudah dikirim ke warung ini tapi belum terjual/ditarik (dari penugasan yang masih berjalan).</p>
+                <div className="overflow-x-auto rounded-lg border border-border bg-surface-raised">
+                  <table className="w-full text-left text-sm">
+                    <thead className="border-b border-border bg-surface-page text-ink-muted">
+                      <tr>
+                        <th className="px-4 py-2.5 font-medium">Produk</th>
+                        <th className="px-4 py-2.5 font-medium">Stok</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {warungDetail.stockByProduct.length === 0 && (
+                        <tr><td colSpan={2} className="px-4 py-6 text-center text-ink-muted">Tidak ada stok yang sedang beredar di warung ini.</td></tr>
+                      )}
+                      {warungDetail.stockByProduct.map((p) => (
+                        <tr key={p.productId}>
+                          <td className="px-4 py-2 text-ink">{p.productName}</td>
+                          <td className="px-4 py-2 font-medium text-ink">{p.quantity}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
 
@@ -444,11 +486,12 @@ export default function ReportsPage() {
                   <th className="px-4 py-2.5 font-medium">Sales</th>
                   <th className="px-4 py-2.5 font-medium">Total Pesanan</th>
                   <th className="px-4 py-2.5 font-medium">Total Nilai</th>
+                  <th className="px-4 py-2.5 font-medium">Total Stok</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {regionSummaries.length === 0 && (
-                  <tr><td colSpan={5} className="px-4 py-6 text-center text-ink-muted">Belum ada data wilayah.</td></tr>
+                  <tr><td colSpan={6} className="px-4 py-6 text-center text-ink-muted">Belum ada data wilayah.</td></tr>
                 )}
                 {regionSummaries.map((r) => (
                   <tr key={r.regionId} className="cursor-pointer hover:bg-surface-page" onClick={() => selectRegion(r.regionId)}>
@@ -457,6 +500,7 @@ export default function ReportsPage() {
                     <td className="px-4 py-2">{r.salesCount}</td>
                     <td className="px-4 py-2">{r.totalOrders}</td>
                     <td className="px-4 py-2">{formatPrice(r.totalOmzet)}</td>
+                    <td className="px-4 py-2">{r.totalStock}</td>
                   </tr>
                 ))}
               </tbody>
@@ -464,7 +508,7 @@ export default function ReportsPage() {
           </div>
         ) : regionDetail ? (
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
               <div className="rounded-lg border border-border bg-surface-raised p-3">
                 <p className="text-xs text-ink-muted">Warung</p>
                 <p className="text-lg font-semibold text-ink">{regionDetail.warungCount}</p>
@@ -481,11 +525,15 @@ export default function ReportsPage() {
                 <p className="text-xs text-ink-muted">Total Nilai</p>
                 <p className="text-lg font-semibold text-forest-700">{formatPrice(regionDetail.totalOmzet)}</p>
               </div>
+              <div className="rounded-lg border border-border bg-surface-raised p-3">
+                <p className="text-xs text-ink-muted">Total Stok</p>
+                <p className="text-lg font-semibold text-ink">{regionDetail.totalStock}</p>
+              </div>
             </div>
 
             <div>
               <h2 className="mb-2 text-sm font-semibold text-ink">Warung di {regionDetail.regionName}</h2>
-              <p className="mb-2 text-xs text-ink-muted">Klik warung untuk melihat kinerja sales yang menanganinya.</p>
+              <p className="mb-2 text-xs text-ink-muted">Klik warung untuk melihat kinerja sales yang menanganinya. Total Stok = jumlah produk yang sudah dikirim ke warung tapi belum terjual/ditarik (dari penugasan yang masih berjalan).</p>
               <div className="overflow-x-auto rounded-lg border border-border bg-surface-raised">
                 <table className="w-full text-left text-sm">
                   <thead className="border-b border-border bg-surface-page text-ink-muted">
@@ -494,12 +542,13 @@ export default function ReportsPage() {
                       <th className="px-4 py-2.5 font-medium">Alamat</th>
                       <th className="px-4 py-2.5 font-medium">Pesanan</th>
                       <th className="px-4 py-2.5 font-medium">Total Nilai</th>
+                      <th className="px-4 py-2.5 font-medium">Total Stok</th>
                       <th className="px-4 py-2.5 font-medium">Pesanan Terakhir</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
                     {regionDetail.warungs.length === 0 && (
-                      <tr><td colSpan={5} className="px-4 py-6 text-center text-ink-muted">Belum ada warung di wilayah ini.</td></tr>
+                      <tr><td colSpan={6} className="px-4 py-6 text-center text-ink-muted">Belum ada warung di wilayah ini.</td></tr>
                     )}
                     {regionDetail.warungs.map((w) => (
                       <tr key={w.warungId} className="cursor-pointer hover:bg-surface-page" onClick={() => setWarungFilter(w.warungId)}>
@@ -507,6 +556,7 @@ export default function ReportsPage() {
                         <td className="px-4 py-2 text-ink-muted">{w.address}</td>
                         <td className="px-4 py-2">{w.totalOrders}</td>
                         <td className="px-4 py-2">{formatPrice(w.totalOmzet)}</td>
+                        <td className="px-4 py-2">{w.totalStock}</td>
                         <td className="px-4 py-2">{w.lastOrderDate ?? "-"}</td>
                       </tr>
                     ))}

@@ -8,10 +8,12 @@ import {
   ORDER_DETAIL_TABLE,
   ASSIGNMENT_TABLE,
   VISIT_TABLE,
+  STOCK_TRANSACTION_TABLE,
+  PRODUCT_TABLE,
 } from "@/lib/google-sheets/tables";
 import { handleApiError } from "@/lib/utils/api-response";
 import { requireAdmin } from "@/lib/auth/session";
-import type { Region, Warung, Sales, Order, OrderDetail, Assignment, Visit } from "@/types/entities";
+import type { Region, Warung, Sales, Order, OrderDetail, Assignment, Visit, StockTransaction, Product } from "@/types/entities";
 
 const regionRepo = new SheetsRepository<Region>(REGION_TABLE);
 const warungRepo = new SheetsRepository<Warung>(WARUNG_TABLE);
@@ -20,6 +22,8 @@ const orderRepo = new SheetsRepository<Order>(ORDER_TABLE);
 const orderDetailRepo = new SheetsRepository<OrderDetail>(ORDER_DETAIL_TABLE);
 const assignmentRepo = new SheetsRepository<Assignment>(ASSIGNMENT_TABLE);
 const visitRepo = new SheetsRepository<Visit>(VISIT_TABLE);
+const stockTxRepo = new SheetsRepository<StockTransaction>(STOCK_TRANSACTION_TABLE);
+const productRepo = new SheetsRepository<Product>(PRODUCT_TABLE);
 
 const NOT_DONE = new Set(["completed", "cancelled"]);
 
@@ -40,7 +44,7 @@ export async function GET(request: NextRequest) {
     const regionId = searchParams.get("regionId");
     const warungId = searchParams.get("warungId");
 
-    const [regions, warungs, salesList, orders, orderDetails, assignments, visits] = await Promise.all([
+    const [regions, warungs, salesList, orders, orderDetails, assignments, visits, stockTx, products] = await Promise.all([
       regionRepo.findAll(),
       warungRepo.findAll(),
       salesRepo.findAll(),
@@ -48,6 +52,8 @@ export async function GET(request: NextRequest) {
       orderDetailRepo.findAll(),
       assignmentRepo.findAll(),
       visitRepo.findAll(),
+      stockTxRepo.findAll(),
+      productRepo.findAll(),
     ]);
 
     const orderTotal = new Map<string, number>();
@@ -56,9 +62,47 @@ export async function GET(request: NextRequest) {
     });
     const orderMap = new Map(orders.map((o) => [o.id, o]));
 
+    // Aktif = belum completed/cancelled — stok yang sudah "selesai" (visit
+    // sudah dikonfirmasi/dibatalkan) tidak lagi dihitung sebagai stok yang
+    // masih ada di warung. Sama persis dengan logika "Ringkasan Stok di
+    // Lapangan" di dashboard, hanya diagregasi per warung di sini.
+    const activeAssignmentIds = new Set(assignments.filter((a) => !NOT_DONE.has(a.status)).map((a) => a.id));
+
+    /**
+     * Total stok yang saat ini berada di suatu warung: dari seluruh
+     * Assignment (yang masih aktif) atas pesanan-pesanan warung tersebut,
+     * dihitung dari StockTransaction: picking_out (+) dikurangi sales_out
+     * dan returned (-). Dikembalikan totalnya (semua produk digabung) dan
+     * rincian per produk.
+     */
+    function buildStockForOrders(orderIds: Set<string>) {
+      const relevantAssignmentIds = new Set(
+        assignments.filter((a) => orderIds.has(a.order_id) && activeAssignmentIds.has(a.id)).map((a) => a.id)
+      );
+      const byProduct = new Map<string, number>();
+      stockTx
+        .filter((tx) => relevantAssignmentIds.has(tx.assignment_id))
+        .forEach((tx) => {
+          const sign = tx.type === "picking_out" ? 1 : tx.type === "sales_out" || tx.type === "returned" ? -1 : 0;
+          if (sign === 0) return;
+          byProduct.set(tx.product_id, (byProduct.get(tx.product_id) ?? 0) + sign * tx.quantity);
+        });
+      const stockByProduct = Array.from(byProduct.entries())
+        .filter(([, qty]) => qty > 0)
+        .map(([productId, qty]) => ({
+          productId,
+          productName: products.find((p) => p.id === productId)?.name ?? productId,
+          quantity: qty,
+        }))
+        .sort((a, b) => b.quantity - a.quantity);
+      const totalStock = stockByProduct.reduce((sum, p) => sum + p.quantity, 0);
+      return { totalStock, stockByProduct };
+    }
+
     function buildRegionSummary(region: Region) {
       const regionOrders = orders.filter((o) => o.region_id === region.id);
       const totalOmzet = regionOrders.reduce((sum, o) => sum + (orderTotal.get(o.id) ?? 0), 0);
+      const { totalStock } = buildStockForOrders(new Set(regionOrders.map((o) => o.id)));
       return {
         regionId: region.id,
         regionName: region.name,
@@ -66,6 +110,7 @@ export async function GET(request: NextRequest) {
         salesCount: salesList.filter((s) => s.assigned_region_id === region.id).length,
         totalOrders: regionOrders.length,
         totalOmzet,
+        totalStock,
       };
     }
 
@@ -120,6 +165,7 @@ export async function GET(request: NextRequest) {
         (latest, o) => (!latest || o.order_date > latest ? o.order_date : latest),
         undefined
       );
+      const { totalStock, stockByProduct } = buildStockForOrders(warungOrderIds);
 
       return NextResponse.json({
         data: {
@@ -134,6 +180,8 @@ export async function GET(request: NextRequest) {
           totalOrders: warungOrders.length,
           totalOmzet,
           lastOrderDate,
+          totalStock,
+          stockByProduct,
           salesPerformance: buildSalesPerformanceForOrders(warungOrderIds),
         },
       });
@@ -161,6 +209,7 @@ export async function GET(request: NextRequest) {
           (latest, o) => (!latest || o.order_date > latest ? o.order_date : latest),
           undefined
         );
+        const { totalStock } = buildStockForOrders(new Set(wOrders.map((o) => o.id)));
         return {
           warungId: w.id,
           warungName: w.name,
@@ -169,6 +218,7 @@ export async function GET(request: NextRequest) {
           totalOrders: wOrders.length,
           totalOmzet,
           lastOrderDate,
+          totalStock,
         };
       })
       .sort((a, b) => b.totalOmzet - a.totalOmzet);
@@ -181,6 +231,7 @@ export async function GET(request: NextRequest) {
         salesCount: regionSales.length,
         totalOrders: regionOrders.length,
         totalOmzet: regionOrders.reduce((sum, o) => sum + (orderTotal.get(o.id) ?? 0), 0),
+        totalStock: warungRows.reduce((sum, w) => sum + w.totalStock, 0),
         warungs: warungRows,
       },
     });

@@ -72,6 +72,7 @@ export default function VisitDataEntryPage() {
   }, [form, rows]);
 
   const totalTagihan = computed.reduce((sum, r) => sum + r.sold * r.unit_price, 0);
+  const totalStokSaatIni = computed.reduce((sum, r) => sum + r.totalStokSaatIni, 0);
   const formatPrice = (n: number) =>
     new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(n);
 
@@ -141,7 +142,12 @@ export default function VisitDataEntryPage() {
         {error && <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>}
 
         <section className="space-y-2 rounded-lg border border-border bg-surface-raised p-4">
-          <h2 className="text-sm font-semibold text-ink">Pendataan Stok</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-ink">Pendataan Stok</h2>
+            <p className="text-xs text-ink-muted">
+              Total Stok: <span className="font-semibold text-ink">{totalStokSaatIni}</span>
+            </p>
+          </div>
           {computed.map((r) => (
             <div key={r.product_id} className="space-y-2 rounded-md border border-border p-3">
               <p className="text-sm font-medium text-ink">{r.product_name}</p>
